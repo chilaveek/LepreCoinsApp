@@ -4,7 +4,6 @@ using CommunityToolkit.Mvvm.Input;
 using Interfaces;
 using Interfaces.DTO;
 using Interfaces.Service;
-using LepreCoinsApp.ViewModels;
 using System.Collections.ObjectModel;
 
 namespace LepreCoinsApp.ViewModels;
@@ -12,282 +11,123 @@ namespace LepreCoinsApp.ViewModels;
 public partial class ReportsViewModel : BaseViewModel
 {
     private readonly IReportService _reportService;
-    private readonly IAuthenticationService _authService;
-    private DateRange _currentDateRange = DateRange.CurrentMonth();
+    private DateRange _currentDateRange;
+    private readonly List<TransactionDto> _allCurrentTransactions = new();
 
-    [ObservableProperty]
-    public ReportDataDto? reportData;
+    [ObservableProperty] private decimal totalIncome;
+    [ObservableProperty] private decimal totalExpenses;
+    [ObservableProperty] private decimal netCash;
+    [ObservableProperty] private bool isReportVisible = false;
+    [ObservableProperty] private DateTime periodStartDate = DateTime.Now.AddMonths(-1);
+    [ObservableProperty] private DateTime periodEndDate = DateTime.Now;
+    [ObservableProperty] private string customDateError = "";
+    [ObservableProperty] private string maxExpenseCategory = "—";
+    [ObservableProperty] private decimal maxExpenseAmount;
+    [ObservableProperty] private string maxIncomeCategory = "—";
+    [ObservableProperty] private decimal maxIncomeAmount;
+    [ObservableProperty] private string selectedSortType = "Сначала новые";
 
-    [ObservableProperty]
-    public decimal totalIncome;
+    // Оставляем только get, так как коллекция инициализируется один раз
+    public ObservableCollection<TransactionDto> ReportTransactions { get; } = new();
 
-    [ObservableProperty]
-    public decimal totalExpenses;
-
-    [ObservableProperty]
-    public decimal netCash;
-
-    [ObservableProperty]
-    public bool isReportVisible = false;
-
-    [ObservableProperty]
-    public ObservableCollection<TransactionDto> reportTransactions = new();
-
-    [ObservableProperty]
-    public string selectedPeriod = "Текущий месяц";
-
-    [ObservableProperty]
-    public DateOnly periodStartDate = DateOnly.FromDateTime(DateTime.Now);
-
-    [ObservableProperty]
-    public DateOnly periodEndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(30));
-
-    [ObservableProperty]
-    public bool isCustomPeriodVisible = false;
-
-    [ObservableProperty]
-    public string customDateError = "";
-
-    public ReportsViewModel(
-        IReportService reportService,
-        IAuthenticationService authService)
+    public ReportsViewModel(IReportService reportService)
     {
         _reportService = reportService;
-        _authService = authService;
-        Title = "Отчеты";
-    }
-
-    [RelayCommand]
-    public Task SetCurrentMonthAsync()
-    {
-        _currentDateRange = DateRange.CurrentMonth();
-        SelectedPeriod = "Текущий месяц";
-        IsCustomPeriodVisible = false;
-        UpdateDateLabels();
-        return GenerateReportAsync();
-    }
-
-    [RelayCommand]
-    public Task SetLast30DaysAsync()
-    {
-        _currentDateRange = DateRange.Last30Days();
-        SelectedPeriod = "Последние 30 дней";
-        IsCustomPeriodVisible = false;
-        UpdateDateLabels();
-        return GenerateReportAsync();
-    }
-
-    [RelayCommand]
-    public Task SetCurrentYearAsync()
-    {
-        _currentDateRange = DateRange.CurrentYear();
-        SelectedPeriod = "Текущий год";
-        IsCustomPeriodVisible = false;
-        UpdateDateLabels();
-        return GenerateReportAsync();
-    }
-
-    [RelayCommand]
-    public Task OpenCustomPeriodAsync()
-    {
-        IsCustomPeriodVisible = true;
-        CustomDateError = "";
-        PeriodStartDate = DateOnly.FromDateTime(_currentDateRange.StartDate);
-        PeriodEndDate = DateOnly.FromDateTime(_currentDateRange.EndDate);
-        SelectedPeriod = "Пользовательский период";
-        return Task.CompletedTask;
-    }
-
-    [RelayCommand]
-    public async Task ApplyCustomPeriodAsync()
-    {
-        CustomDateError = "";
-
-        // Валидация дат
-        if (PeriodStartDate >= PeriodEndDate)
-        {
-            CustomDateError = "Дата начала должна быть раньше даты конца";
-            return;
-        }
-
-        // Создаём новый DateRange
-        _currentDateRange = new DateRange(
-            PeriodStartDate.ToDateTime(TimeOnly.MinValue),
-            PeriodEndDate.ToDateTime(TimeOnly.MaxValue)
-        );
-
-        IsCustomPeriodVisible = false;
-        UpdateDateLabels();
-        await GenerateReportAsync();
-    }
-
-    [RelayCommand]
-    public Task CancelCustomPeriodAsync()
-    {
-        IsCustomPeriodVisible = false;
-        CustomDateError = "";
-        return Task.CompletedTask;
     }
 
     [RelayCommand]
     public async Task GenerateReportAsync()
     {
+        CustomDateError = "";
+        if (PeriodStartDate >= PeriodEndDate)
+        {
+            CustomDateError = "Дата начала должна быть меньше даты конца";
+            IsReportVisible = false;
+            return;
+        }
+
+        IsBusy = true;
         try
         {
-            IsBusy = true;
-            BusyText = "Генерация отчета...";
-
-            int userId = Session.CurrentUser.Id;
-
-            // Вызываем BLL для получения данных отчёта
-            var result = await _reportService.GetReportDataAsync(userId, _currentDateRange);
+            _currentDateRange = new DateRange(PeriodStartDate, PeriodEndDate);
+            var result = await _reportService.GetReportDataAsync(Session.CurrentUser.Id, _currentDateRange);
 
             if (result.IsSuccess && result.Data != null)
             {
-                // Сохраняем данные в свойства
-                ReportData = result.Data;
                 TotalIncome = result.Data.TotalIncome;
                 TotalExpenses = result.Data.TotalExpenses;
                 NetCash = result.Data.NetCash;
 
-                // Конвертируем транзакции в ObservableCollection для UI
-                ReportTransactions = new ObservableCollection<TransactionDto>(
-                    result.Data.Transactions.OrderByDescending(t => t.Date)
-                );
+                _allCurrentTransactions.Clear();
+                _allCurrentTransactions.AddRange(result.Data.Transactions);
 
-                // Показываем отчёт на экране
+                // Поиск максимумов
+                UpdateHighlights();
+
+                // Применяем сортировку и заполняем ObservableCollection
+                ApplySort();
+
                 IsReportVisible = true;
-
-                await Application.Current!.MainPage!.DisplayAlert(
-                    "Успех",
-                    $"Отчет сгенерирован за период {SelectedPeriod}",
-                    "OK"
-                );
             }
             else
             {
-                await Application.Current!.MainPage!.DisplayAlert(
-                    "Ошибка",
-                    result.ErrorMessage ?? "Не удалось сгенерировать отчет",
-                    "OK"
-                );
+                IsReportVisible = false;
+                await Application.Current.MainPage.DisplayAlert("Инфо", "Нет данных", "OK");
             }
         }
-        catch (Exception ex)
-        {
-            await Application.Current!.MainPage!.DisplayAlert(
-                "Ошибка",
-                $"Ошибка генерации отчета: {ex.Message}",
-                "OK"
-            );
-        }
-        finally
-        {
-            IsBusy = false;
-            BusyText = "";
-        }
+        finally { IsBusy = false; }
     }
 
-    // ====== ЭКСПОРТ В PDF ======
+    private void UpdateHighlights()
+    {
+        var maxExp = _allCurrentTransactions.Where(t => t.Type == "Расход" || t.Type == "Expense").OrderByDescending(t => t.Amount).FirstOrDefault();
+        MaxExpenseCategory = maxExp?.Description ?? "—";
+        MaxExpenseAmount = maxExp?.Amount ?? 0;
 
-    /// <summary>
-    /// Сохраняет отчёт в PDF файл
-    /// </summary>
+        var maxInc = _allCurrentTransactions.Where(t => t.Type == "Доход" || t.Type == "Income").OrderByDescending(t => t.Amount).FirstOrDefault();
+        MaxIncomeCategory = maxInc?.Description ?? "—";
+        MaxIncomeAmount = maxInc?.Amount ?? 0;
+    }
+
+    partial void OnSelectedSortTypeChanged(string value) => ApplySort();
+
+    private void ApplySort()
+    {
+        if (!_allCurrentTransactions.Any()) return;
+
+        var sorted = SelectedSortType switch
+        {
+            "Сначала дорогие" => _allCurrentTransactions.OrderByDescending(t => t.Amount),
+            "Сначала дешевые" => _allCurrentTransactions.OrderBy(t => t.Amount),
+            "Сначала доходы" => _allCurrentTransactions.OrderByDescending(t => t.Type == "Доход" || t.Type == "Income").ThenByDescending(t => t.Date),
+            "Сначала расходы" => _allCurrentTransactions.OrderByDescending(t => t.Type == "Расход" || t.Type == "Expense").ThenByDescending(t => t.Date),
+            _ => _allCurrentTransactions.OrderByDescending(t => t.Date)
+        };
+
+        // Важно: работаем с коллекцией в основном потоке
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            ReportTransactions.Clear();
+            foreach (var t in sorted)
+                ReportTransactions.Add(t);
+        });
+    }
+
     [RelayCommand]
     public async Task SaveReportToPdfAsync()
     {
-        if (ReportData == null)
-        {
-            await Application.Current!.MainPage!.DisplayAlert(
-                "Ошибка",
-                "Сначала сгенерируйте отчет",
-                "OK"
-            );
-            return;
-        }
-
+        if (!IsReportVisible) return;
+        IsBusy = true;
         try
         {
-            IsBusy = true;
-            BusyText = "Экспорт в PDF...";
-
-            int userId = Session.CurrentUser.Id;
-
-            // Вызываем сервис для генерации PDF
-            var result = await _reportService.GeneratePdfReportAsync(userId, _currentDateRange);
-
-            if (result.IsSuccess && result.Data != null)
+            var result = await _reportService.GeneratePdfReportAsync(Session.CurrentUser.Id, _currentDateRange);
+            if (result.IsSuccess)
             {
-                // Сохраняем PDF файл в папку AppDataDirectory
-                var fileName = $"Report_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
-                var filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
-
-                // Записываем байты в файл
+                var filePath = Path.Combine(FileSystem.CacheDirectory, "Report.pdf");
                 await File.WriteAllBytesAsync(filePath, result.Data);
-
-                // Пытаемся открыть файл (если возможно)
-                await OpenPdfFileAsync(filePath);
-
-                await Application.Current!.MainPage!.DisplayAlert(
-                    "Успех",
-                    $"Отчет сохранен:\n{fileName}\n\nПуть: {filePath}",
-                    "OK"
-                );
-            }
-            else
-            {
-                await Application.Current!.MainPage!.DisplayAlert(
-                    "Ошибка",
-                    result.ErrorMessage ?? "Ошибка экспорта в PDF",
-                    "OK"
-                );
+                await Launcher.Default.OpenAsync(new OpenFileRequest { File = new ReadOnlyFile(filePath) });
             }
         }
-        catch (Exception ex)
-        {
-            await Application.Current!.MainPage!.DisplayAlert(
-                "Ошибка",
-                $"Ошибка сохранения PDF: {ex.Message}",
-                "OK"
-            );
-        }
-        finally
-        {
-            IsBusy = false;
-            BusyText = "";
-        }
-    }
-
-    [RelayCommand]
-    public Task CloseReportAsync()
-    {
-        IsReportVisible = false;
-        ReportData = null;
-        ReportTransactions = new ObservableCollection<TransactionDto>();
-        TotalIncome = 0;
-        TotalExpenses = 0;
-        NetCash = 0;
-        return Task.CompletedTask;
-    }
-
-
-    private void UpdateDateLabels()
-    {
-        PeriodStartDate = DateOnly.FromDateTime(_currentDateRange.StartDate);
-        PeriodEndDate = DateOnly.FromDateTime(_currentDateRange.EndDate);
-    }
-
-    private async Task OpenPdfFileAsync(string filePath)
-    {
-        try
-        {
-            await Launcher.Default.OpenAsync(new OpenFileRequest
-            {
-                File = new ReadOnlyFile(filePath)
-            });
-        }
-        catch
-        {
-        }
+        finally { IsBusy = false; }
     }
 }

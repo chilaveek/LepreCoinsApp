@@ -2,13 +2,16 @@
 using Interfaces;
 using Interfaces.DTO;
 using Interfaces.Service;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using iText.Kernel.Font;
 using iText.Kernel.Pdf;
 using iText.Layout;
 using iText.Layout.Element;
+using iText.Layout.Properties;
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace LC.BLL.Services
 {
@@ -25,128 +28,73 @@ namespace LC.BLL.Services
         {
             try
             {
-                var reportData = await GetReportDataAsync(userId, dateRange);
-                if (!reportData.IsSuccess || reportData.Data == null)
-                    return Result<byte[]>.Failure("Ошибка при получении данных отчета");
+                var reportDataResult = await GetReportDataAsync(userId, dateRange);
+                if (!reportDataResult.IsSuccess || reportDataResult.Data == null)
+                    return Result<byte[]>.Failure("Ошибка получения данных");
 
-                using (var stream = new MemoryStream())
+                var reportData = reportDataResult.Data;
+
+                using var stream = new MemoryStream();
+                var writer = new PdfWriter(stream);
+                var pdf = new PdfDocument(writer);
+                var document = new Document(pdf);
+
+                string fontPath = @"C:\Windows\Fonts\arial.ttf";
+                PdfFont font;
+
+                if (File.Exists(fontPath))
                 {
-                    try
-                    {
-                        var writer = new PdfWriter(stream);
-                        var pdfDoc = new PdfDocument(writer);
-                        var document = new Document(pdfDoc);
-
-                        // Заголовок
-                        document.Add(new Paragraph("ОТЧЕТ О БЮДЖЕТЕ")
-                            .SetFontSize(24));
-
-                        document.Add(new Paragraph($"Период: {dateRange.StartDate:dd.MM.yyyy} - {dateRange.EndDate:dd.MM.yyyy}")
-                            .SetFontSize(12));
-
-                        document.Add(new Paragraph("\n"));
-
-                        // Сводка
-                        document.Add(new Paragraph("ФИНАНСОВАЯ СВОДКА")
-                            .SetFontSize(16));
-
-                        var summaryTable = new Table(2);
-                        summaryTable.AddCell("Общий доход");
-                        summaryTable.AddCell(reportData.Data.TotalIncome.ToString("C"));
-                        summaryTable.AddCell("Общие расходы");
-                        summaryTable.AddCell(reportData.Data.TotalExpenses.ToString("C"));
-                        summaryTable.AddCell("Чистый кэш");
-                        summaryTable.AddCell(reportData.Data.NetCash.ToString("C"));
-
-                        document.Add(summaryTable);
-                        document.Add(new Paragraph("\n"));
-
-                        // Транзакции
-                        document.Add(new Paragraph("ТРАНЗАКЦИИ")
-                            .SetFontSize(16));
-
-                        var transactionsTable = new Table(4);
-                        transactionsTable.AddHeaderCell("Дата");
-                        transactionsTable.AddHeaderCell("Описание");
-                        transactionsTable.AddHeaderCell("Сумма");
-                        transactionsTable.AddHeaderCell("Тип");
-
-                        foreach (var transaction in reportData.Data.Transactions)
-                        {
-                            transactionsTable.AddCell(transaction.Date.ToString("dd.MM.yyyy"));
-                            transactionsTable.AddCell(transaction.Description ?? "");
-                            transactionsTable.AddCell(transaction.Amount.ToString("C"));
-                            transactionsTable.AddCell(transaction.Type ?? "");
-                        }
-
-                        document.Add(transactionsTable);
-
-                        // ✅ КРИТИЧНО: Закрыть document ПЕРЕД тем как читать из stream
-                        document.Close();
-
-                        // Теперь можно вернуть byte array
-                        return Result<byte[]>.Success(stream.ToArray());
-                    }
-                    catch (Exception ex)
-                    {
-                        return Result<byte[]>.Failure($"Ошибка при создании PDF: {ex.Message}");
-                    }
+                    font = PdfFontFactory.CreateFont(fontPath, "Identity-H", PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED);
                 }
+                else
+                {
+                    font = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA);
+                }
+
+                document.SetFont(font);
+
+                document.Add(new Paragraph("ОТЧЕТ О БЮДЖЕТЕ")
+                    .SetFontSize(22)
+                    .SetTextAlignment(TextAlignment.CENTER));
+
+                document.Add(new Paragraph($"Период: {dateRange.StartDate:dd.MM.yyyy} - {dateRange.EndDate:dd.MM.yyyy}")
+                    .SetFontSize(12)
+                    .SetTextAlignment(TextAlignment.CENTER));
+
+                document.Add(new Paragraph("\nФИНАНСОВАЯ СВОДКА").SetFontSize(16));
+
+                var summaryTable = new Table(2).UseAllAvailableWidth();
+                summaryTable.AddCell("Общий доход");
+                summaryTable.AddCell(reportData.TotalIncome.ToString("C"));
+                summaryTable.AddCell("Общие расходы");
+                summaryTable.AddCell(reportData.TotalExpenses.ToString("C"));
+                summaryTable.AddCell("Итоговый баланс");
+                summaryTable.AddCell(reportData.NetCash.ToString("C"));
+                document.Add(summaryTable);
+
+                document.Add(new Paragraph("\nДЕТАЛИЗАЦИЯ ОПЕРАЦИЙ").SetFontSize(16));
+
+                var table = new Table(4).UseAllAvailableWidth();
+                table.AddHeaderCell("Дата");
+                table.AddHeaderCell("Описание");
+                table.AddHeaderCell("Сумма");
+                table.AddHeaderCell("Тип");
+
+                foreach (var t in reportData.Transactions)
+                {
+                    table.AddCell(t.Date.ToString("dd.MM.yyyy"));
+                    table.AddCell(t.Description ?? "—");
+                    table.AddCell(t.Amount.ToString("N2"));
+                    table.AddCell(t.Type ?? "—");
+                }
+                document.Add(table);
+
+                document.Close();
+                return Result<byte[]>.Success(stream.ToArray());
             }
             catch (Exception ex)
             {
-                return Result<byte[]>.Failure($"Ошибка при генерации PDF отчета: {ex.Message}");
-            }
-        }
-
-        public async Task<Result<byte[]>> GenerateBudgetReportAsync(int budgetId)
-        {
-            try
-            {
-                var budget = await _unitOfWork.BudgetRepository.GetByIdAsync(budgetId);
-                if (budget == null)
-                    return Result<byte[]>.Failure("Бюджет не найден");
-
-                using (var stream = new MemoryStream())
-                {
-                    try
-                    {
-                        var writer = new PdfWriter(stream);
-                        var pdfDoc = new PdfDocument(writer);
-                        var document = new Document(pdfDoc);
-
-                        document.Add(new Paragraph("ОТЧЕТ О БЮДЖЕТЕ")
-                            .SetFontSize(24));
-
-                        document.Add(new Paragraph($"Период: {budget.PeriodStart:dd.MM.yyyy} - {budget.PeriodEnd:dd.MM.yyyy}")
-                            .SetFontSize(12));
-
-                        document.Add(new Paragraph("\n"));
-
-                        var table = new Table(2);
-                        table.AddCell("Установленный лимит");
-                        table.AddCell((budget.EstablishedAmount ?? 0).ToString("C"));
-                        table.AddCell("Текущие расходы");
-                        table.AddCell((budget.CurrentExpenses ?? 0).ToString("C"));
-                        table.AddCell("Осталось");
-                        table.AddCell(((budget.EstablishedAmount ?? 0) - (budget.CurrentExpenses ?? 0)).ToString("C"));
-
-                        document.Add(table);
-
-                        // ✅ КРИТИЧНО: Закрыть document ПЕРЕД тем как читать из stream
-                        document.Close();
-
-                        return Result<byte[]>.Success(stream.ToArray());
-                    }
-                    catch (Exception ex)
-                    {
-                        return Result<byte[]>.Failure($"Ошибка при создании PDF бюджета: {ex.Message}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                return Result<byte[]>.Failure($"Ошибка при генерации отчета бюджета: {ex.Message}");
+                return Result<byte[]>.Failure($"Ошибка PDF: {ex.Message}");
             }
         }
 
@@ -165,49 +113,50 @@ namespace LC.BLL.Services
                     i.Date <= DateOnly.FromDateTime(dateRange.EndDate));
 
                 var transactions = new List<TransactionDto>();
-                var totalExpenses = 0m;
-                var totalIncome = 0m;
+                decimal totalExpenses = 0;
+                decimal totalIncome = 0;
 
-                foreach (var expense in expenses)
+                foreach (var e in expenses)
                 {
-                    var amount = expense.Sum ?? 0;
+                    decimal amount = e.Sum ?? 0;
                     totalExpenses += amount;
                     transactions.Add(new TransactionDto(
-                        expense.Id,
-                        expense.Date?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Now,
+                        e.Id,
+                        e.Date?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Now,
                         amount,
                         "Расход",
-                        expense.Description ?? "",
+                        e.Description ?? "",
                         "Expense"));
                 }
 
-                foreach (var income in incomes)
+                foreach (var i in incomes)
                 {
-                    var amount = income.Sum ?? 0;
+                    decimal amount = i.Sum ?? 0;
                     totalIncome += amount;
                     transactions.Add(new TransactionDto(
-                        income.Id,
-                        income.Date?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Now,
+                        i.Id,
+                        i.Date?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Now,
                         amount,
                         "Доход",
-                        income.Description ?? "",
+                        i.Description ?? "",
                         "Income"));
                 }
 
-                var reportData = new ReportDataDto(
+                var report = new ReportDataDto(
                     userId,
                     DateTime.Now,
                     transactions.OrderByDescending(t => t.Date).ToList(),
                     null,
                     totalIncome,
                     totalExpenses,
-                    totalIncome - totalExpenses);
+                    totalIncome - totalExpenses
+                );
 
-                return Result<ReportDataDto>.Success(reportData);
+                return Result<ReportDataDto>.Success(report);
             }
             catch (Exception ex)
             {
-                return Result<ReportDataDto>.Failure($"Ошибка при получении данных отчета: {ex.Message}");
+                return Result<ReportDataDto>.Failure(ex.Message);
             }
         }
     }

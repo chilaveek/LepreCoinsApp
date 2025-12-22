@@ -24,6 +24,7 @@ public class DatabaseInitializationService : IDatabaseInitializationService
         try
         {
             await _context.Database.EnsureCreatedAsync();
+            await SeedCategoriesAsync();
 
             System.Diagnostics.Debug.WriteLine("Проверка базы данных завершена: всё готово к работе.");
         }
@@ -37,5 +38,32 @@ public class DatabaseInitializationService : IDatabaseInitializationService
             }
             throw;
         }
+    }
+    private async Task SeedCategoriesAsync()
+    {
+        // Доходы
+        if (!await _context.IncomeCategories.AnyAsync())
+        {
+            _context.IncomeCategories.AddRange(
+                new IncomeCategory { Category = "Зарплата" },   // Id будет 1
+                new IncomeCategory { Category = "Фриланс" },   // 2
+                new IncomeCategory { Category = "Подарок" },   // 3
+                new IncomeCategory { Category = "Другое" }     // 4
+            );
+        }
+
+        // Расходы
+        if (!await _context.ExpenseCategories.AnyAsync())
+        {
+            _context.ExpenseCategories.AddRange(
+                new ExpenseCategory { Name = "Продукты" },      // Id 1
+                new ExpenseCategory { Name = "Транспорт" },     // 2
+                new ExpenseCategory { Name = "Дом" },           // 3
+                new ExpenseCategory { Name = "Здоровье" },      // 4
+                new ExpenseCategory { Name = "Развлечения" }    // 5
+            );
+        }
+
+        await _context.SaveChangesAsync();
     }
 }

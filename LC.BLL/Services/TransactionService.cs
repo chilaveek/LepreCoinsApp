@@ -95,7 +95,7 @@ public class TransactionService : ITransactionService
         }
         catch (Exception ex)
         {
-            return Result<TransactionDto>.Failure($"Ошибка при добавлении дохода: {ex.Message}");
+            return Result<TransactionDto>.Failure($"Ошибка при добавлении дохода: {ex.Message} {ex.InnerException}");
         }
     }
 
