@@ -1,0 +1,1481 @@
+ФАЙЛОВАЯ СТРУКТУРА (что есть сейчас)
+
+ApplicationCore
+-DomainModel: проект
+--Budget.cs
+--Expense.cs
+--ExpenseCategory.cs
+--Family.cs
+--Income.cs
+--IncomeCategory.cs
+--Saving.cs
+--TransferToSaving.cs
+--User.cs
+--Wallet.cs
+-Interfaces: проект
+--DTO
+---TransactionDto.cs
+--Repository
+---IRepository
+--Service
+---ITransactionService
+Infrastructure
+-LC.BLL: проект
+--Services
+---TransactionService.cs
+-LC.DAL: проект
+--FamilybudgetdbContext.cs
+--EfRepository.cs
+LepreCoinsApp: проект
+-ViewModels
+--BaseViewModel.cs
+--ReportsViewModel.cs
+-Views
+--BudgetPage.xaml
+--MainPage.xaml
+--ReportsPage.xaml
+--SettingsPage.xaml
+--и все файлы xaml.cs
+AppShell.xaml
+AppShell.xaml.cs
+MauiProgram.cs
+appsettings.json
+
+СОДЕРЖАНИЕ С ФАЙЛОВ (НАЧИНАЮ С ПЕРВОГО)
+
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>
+
+using System;
+using System.Collections.Generic;
+
+namespace LepreCoins.Models;
+
+public partial class Budget
+{
+    public int Id { get; set; }
+
+    public decimal? EstablishedAmount { get; set; }
+
+    public decimal? CurrentExpenses { get; set; }
+
+    public DateOnly? PeriodStart { get; set; }
+
+    public DateOnly? PeriodEnd { get; set; }
+
+    public virtual ICollection<ExpenseCategory> ExpenseCategories { get; set; } = new List<ExpenseCategory>();
+
+    public virtual ICollection<User> Users { get; set; } = new List<User>();
+}
+
+using System;
+using System.Collections.Generic;
+
+namespace LepreCoins.Models;
+
+public partial class Expense
+{
+    public int Id { get; set; }
+
+    public DateOnly? Date { get; set; }
+
+    public decimal? Sum { get; set; }
+
+    public string? Description { get; set; }
+
+    public string? ExpenseType { get; set; }
+
+    public int? Categoryid { get; set; }
+
+    public int? Userid { get; set; }
+
+    public int? Walletid { get; set; }
+
+    public virtual ExpenseCategory? Category { get; set; }
+
+    public virtual User? User { get; set; }
+
+    public virtual Wallet? Wallet { get; set; }
+}
+
+using System;
+using System.Collections.Generic;
+
+namespace LepreCoins.Models;
+
+public partial class ExpenseCategory
+{
+    public int Id { get; set; }
+
+    public string? Name { get; set; }
+
+    public string? CategoryType { get; set; }
+
+    public string? Attribute { get; set; }
+
+    public int? Budgetid { get; set; }
+
+    public virtual Budget? Budget { get; set; }
+
+    public virtual ICollection<Expense> Expenses { get; set; } = new List<Expense>();
+}
+
+using System;
+using System.Collections.Generic;
+
+namespace LepreCoins.Models;
+
+public partial class Family
+{
+    public int Id { get; set; }
+
+    public string Name { get; set; } = null!;
+
+    public virtual ICollection<User> Users { get; set; } = new List<User>();
+}
+
+using System;
+using System.Collections.Generic;
+
+namespace LepreCoins.Models;
+
+public partial class Income
+{
+    public int Id { get; set; }
+
+    public DateOnly? Date { get; set; }
+
+    public decimal? Sum { get; set; }
+
+    public string? Description { get; set; }
+
+    public int? Userid { get; set; }
+
+    public int? Incomecategoryid { get; set; }
+
+    public int? Walletid { get; set; }
+
+    public virtual IncomeCategory? Incomecategory { get; set; }
+
+    public virtual User? User { get; set; }
+
+    public virtual Wallet? Wallet { get; set; }
+}
+
+using System;
+using System.Collections.Generic;
+
+namespace LepreCoins.Models;
+
+public partial class IncomeCategory
+{
+    public int Id { get; set; }
+
+    public string? Category { get; set; }
+
+    public virtual ICollection<Income> Incomes { get; set; } = new List<Income>();
+}
+
+using System;
+using System.Collections.Generic;
+
+namespace LepreCoins.Models;
+
+public partial class Saving
+{
+    public int Id { get; set; }
+
+    public string? GoalName { get; set; }
+
+    public decimal? TargetAmount { get; set; }
+
+    public decimal? CurrentAmount { get; set; }
+
+    public DateOnly? CreatedDate { get; set; }
+
+    public DateOnly? TargetDate { get; set; }
+
+    public double? ProgressPercent { get; set; }
+
+    public int? Userid { get; set; }
+
+    public virtual ICollection<TransferToSaving> TransferToSavings { get; set; } = new List<TransferToSaving>();
+
+    public virtual User? User { get; set; }
+}
+
+using System;
+using System.Collections.Generic;
+
+namespace LepreCoins.Models;
+
+public partial class TransferToSaving
+{
+    public int Id { get; set; }
+
+    public DateOnly? Date { get; set; }
+
+    public decimal? Sum { get; set; }
+
+    public string? Description { get; set; }
+
+    public int? Savingsid { get; set; }
+
+    public int? Userid { get; set; }
+
+    public bool? Isdeposit { get; set; }
+
+    public int? Column { get; set; }
+
+    public virtual Saving? Savings { get; set; }
+
+    public virtual User? User { get; set; }
+}
+
+using System;
+using System.Collections.Generic;
+
+namespace LepreCoins.Models;
+
+public partial class User
+{
+    public int Id { get; set; }
+
+    public string? Name { get; set; }
+
+    public string? Email { get; set; }
+
+    public string? PasswordHash { get; set; }
+
+    public int? Familyid { get; set; }
+
+    public int? Budgetid { get; set; }
+
+    public virtual Budget? Budget { get; set; }
+
+    public virtual ICollection<Expense> Expenses { get; set; } = new List<Expense>();
+
+    public virtual Family? Family { get; set; }
+
+    public virtual ICollection<Income> Incomes { get; set; } = new List<Income>();
+
+    public virtual ICollection<Saving> Savings { get; set; } = new List<Saving>();
+
+    public virtual ICollection<TransferToSaving> TransferToSavings { get; set; } = new List<TransferToSaving>();
+
+    public virtual ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
+}
+
+using System;
+using System.Collections.Generic;
+
+namespace LepreCoins.Models;
+
+public partial class Wallet
+{
+    public int Id { get; set; }
+
+    public string Name { get; set; } = null!;
+
+    public decimal? Balance { get; set; }
+
+    public string? Currency { get; set; }
+
+    public int? Userid { get; set; }
+
+    public virtual ICollection<Expense> Expenses { get; set; } = new List<Expense>();
+
+    public virtual ICollection<Income> Incomes { get; set; } = new List<Income>();
+
+    public virtual User? User { get; set; }
+}
+
+
+using System;
+
+namespace ApplicationCore.DTO
+{
+    public class TransactionDto
+    {
+        public int Id { get; set; }
+        public DateOnly Date { get; set; }
+        public string Operation { get; set; } // "Доход" или "Расход"
+        public string Category { get; set; }
+        public decimal Amount { get; set; }
+        public string Color { get; set; } // Цвет для UI (зеленый/красный)
+    }
+}
+
+
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace ApplicationCore.Interfaces
+{
+    // Обобщенный интерфейс для любой модели
+    public interface IRepository<T> where T : class
+    {
+        Task<T> GetByIdAsync(int id);
+        Task<IEnumerable<T>> GetAllAsync();
+        Task AddAsync(T entity);
+        Task UpdateAsync(T entity);
+        Task DeleteAsync(T entity);
+    }
+}
+
+using ApplicationCore.DTO;
+using LepreCoins.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace ApplicationCore.Interfaces
+{
+    public interface ITransactionService
+    {
+        Task AddIncomeAsync(Income income);
+        Task AddExpenseAsync(Expense expense);
+        Task<IEnumerable<TransactionDto>> GetRecentTransactionsAsync();
+    }
+}
+
+
+using ApplicationCore.DTO;
+using ApplicationCore.Interfaces;
+using LepreCoins.Models;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace LC.BLL.Services
+{
+    public class TransactionService : ITransactionService
+    {
+        private readonly IRepository<Income> _incomeRepository;
+        private readonly IRepository<Expense> _expenseRepository;
+
+        // Мы запрашиваем репозитории через конструктор
+        public TransactionService(IRepository<Income> incomeRepository, IRepository<Expense> expenseRepository)
+        {
+            _incomeRepository = incomeRepository;
+            _expenseRepository = expenseRepository;
+        }
+
+        public async Task AddIncomeAsync(Income income)
+        {
+            // Здесь можно добавить проверку, например: if (income.Sum <= 0) ошибка
+            await _incomeRepository.AddAsync(income);
+        }
+
+        public async Task AddExpenseAsync(Expense expense)
+        {
+            await _expenseRepository.AddAsync(expense);
+        }
+
+        public async Task<IEnumerable<TransactionDto>> GetRecentTransactionsAsync()
+        {
+            var incomes = await _incomeRepository.GetAllAsync();
+            var expenses = await _expenseRepository.GetAllAsync();
+
+            var list = new List<TransactionDto>();
+
+            // Превращаем доходы в DTO
+            foreach (var item in incomes)
+            {
+                list.Add(new TransactionDto
+                {
+                    Id = item.Id,
+                    Date = item.Date ?? DateOnly.FromDateTime(System.DateTime.Now),
+                    Operation = "Доход",
+                    Category = item.Incomecategory?.Category ?? "Без категории",
+                    Amount = item.Sum ?? 0,
+                    Color = "#00FF00" // Зеленый
+                });
+            }
+
+            // Превращаем расходы в DTO
+            foreach (var item in expenses)
+            {
+                list.Add(new TransactionDto
+                {
+                    Id = item.Id,
+                    Date = item.Date ?? DateOnly.FromDateTime(System.DateTime.Now),
+                    Operation = "Расход",
+                    Category = item.Category?.Name ?? "Без категории",
+                    Amount = (item.Sum ?? 0) * -1, // Расход показываем с минусом
+                    Color = "#FF0000" // Красный
+                });
+            }
+
+            // Сортируем по дате (свежие сверху) и берем последние 20
+            return list.OrderByDescending(x => x.Date).Take(20);
+        }
+    }
+}
+
+using ApplicationCore.Interfaces;
+using LepreCoins.Models; // Твои модели
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace LC.DAL.Repositories
+{
+    public class EfRepository<T> : IRepository<T> where T : class
+    {
+        private readonly FamilybudgetdbContext _context;
+
+        public EfRepository(FamilybudgetdbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<T> GetByIdAsync(int id)
+        {
+            return await _context.Set<T>().FindAsync(id);
+        }
+
+        public async Task<IEnumerable<T>> GetAllAsync()
+        {
+            return await _context.Set<T>().ToListAsync();
+        }
+
+        public async Task AddAsync(T entity)
+        {
+            await _context.Set<T>().AddAsync(entity);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateAsync(T entity)
+        {
+            _context.Entry(entity).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(T entity)
+        {
+            _context.Set<T>().Remove(entity);
+            await _context.SaveChangesAsync();
+        }
+    }
+}
+
+using System;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+
+namespace LepreCoins.Models;
+
+public partial class FamilybudgetdbContext : DbContext
+{
+    public FamilybudgetdbContext()
+    {
+    }
+
+    public FamilybudgetdbContext(DbContextOptions<FamilybudgetdbContext> options)
+        : base(options)
+    {
+    }
+
+    public virtual DbSet<Budget> Budgets { get; set; }
+
+    public virtual DbSet<Expense> Expenses { get; set; }
+
+    public virtual DbSet<ExpenseCategory> ExpenseCategories { get; set; }
+
+    public virtual DbSet<Family> Families { get; set; }
+
+    public virtual DbSet<Income> Incomes { get; set; }
+
+    public virtual DbSet<IncomeCategory> IncomeCategories { get; set; }
+
+    public virtual DbSet<Saving> Savings { get; set; }
+
+    public virtual DbSet<TransferToSaving> TransferToSavings { get; set; }
+
+    public virtual DbSet<User> Users { get; set; }
+
+    public virtual DbSet<Wallet> Wallets { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseNpgsql("Server=localhost;Port=5432;Database=familybudgetdb;User Id=postgres;Password=12345;");
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Budget>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("budget_pkey");
+
+            entity.ToTable("Budget");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("nextval('budget_id_seq'::regclass)")
+                .HasColumnName("id");
+            entity.Property(e => e.CurrentExpenses)
+                .HasPrecision(19)
+                .HasColumnName("current_expenses");
+            entity.Property(e => e.EstablishedAmount)
+                .HasPrecision(19)
+                .HasColumnName("established_amount");
+            entity.Property(e => e.PeriodEnd).HasColumnName("period_end");
+            entity.Property(e => e.PeriodStart).HasColumnName("period_start");
+        });
+
+        modelBuilder.Entity<Expense>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("expense_pkey");
+
+            entity.ToTable("Expense");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("nextval('expense_id_seq'::regclass)")
+                .HasColumnName("id");
+            entity.Property(e => e.Categoryid).HasColumnName("categoryid");
+            entity.Property(e => e.Date).HasColumnName("date");
+            entity.Property(e => e.Description)
+                .HasMaxLength(255)
+                .HasColumnName("description");
+            entity.Property(e => e.ExpenseType)
+                .HasMaxLength(255)
+                .HasColumnName("expense_type");
+            entity.Property(e => e.Sum)
+                .HasPrecision(19)
+                .HasColumnName("sum");
+            entity.Property(e => e.Userid).HasColumnName("userid");
+            entity.Property(e => e.Walletid).HasColumnName("walletid");
+
+            entity.HasOne(d => d.Category).WithMany(p => p.Expenses)
+                .HasForeignKey(d => d.Categoryid)
+                .HasConstraintName("expense_categoryid_fkey");
+
+            entity.HasOne(d => d.User).WithMany(p => p.Expenses)
+                .HasForeignKey(d => d.Userid)
+                .HasConstraintName("expense_userid_fkey");
+
+            entity.HasOne(d => d.Wallet).WithMany(p => p.Expenses)
+                .HasForeignKey(d => d.Walletid)
+                .HasConstraintName("expense_walletid_fkey");
+        });
+
+        modelBuilder.Entity<ExpenseCategory>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("expensecategory_pkey");
+
+            entity.ToTable("ExpenseCategory");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("nextval('expensecategory_id_seq'::regclass)")
+                .HasColumnName("id");
+            entity.Property(e => e.Attribute)
+                .HasMaxLength(255)
+                .HasColumnName("attribute");
+            entity.Property(e => e.Budgetid).HasColumnName("budgetid");
+            entity.Property(e => e.CategoryType)
+                .HasMaxLength(255)
+                .HasColumnName("category_type");
+            entity.Property(e => e.Name)
+                .HasMaxLength(255)
+                .HasColumnName("name");
+
+            entity.HasOne(d => d.Budget).WithMany(p => p.ExpenseCategories)
+                .HasForeignKey(d => d.Budgetid)
+                .HasConstraintName("expensecategory_budgetid_fkey");
+        });
+
+        modelBuilder.Entity<Family>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("family_pkey");
+
+            entity.ToTable("Family");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("nextval('family_id_seq'::regclass)")
+                .HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(255)
+                .HasColumnName("name");
+        });
+
+        modelBuilder.Entity<Income>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("income_pkey");
+
+            entity.ToTable("Income");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("nextval('income_id_seq'::regclass)")
+                .HasColumnName("id");
+            entity.Property(e => e.Date).HasColumnName("date");
+            entity.Property(e => e.Description)
+                .HasMaxLength(255)
+                .HasColumnName("description");
+            entity.Property(e => e.Incomecategoryid).HasColumnName("incomecategoryid");
+            entity.Property(e => e.Sum)
+                .HasPrecision(19)
+                .HasColumnName("sum");
+            entity.Property(e => e.Userid).HasColumnName("userid");
+            entity.Property(e => e.Walletid).HasColumnName("walletid");
+
+            entity.HasOne(d => d.Incomecategory).WithMany(p => p.Incomes)
+                .HasForeignKey(d => d.Incomecategoryid)
+                .HasConstraintName("income_incomecategoryid_fkey");
+
+            entity.HasOne(d => d.User).WithMany(p => p.Incomes)
+                .HasForeignKey(d => d.Userid)
+                .HasConstraintName("income_userid_fkey");
+
+            entity.HasOne(d => d.Wallet).WithMany(p => p.Incomes)
+                .HasForeignKey(d => d.Walletid)
+                .HasConstraintName("income_walletid_fkey");
+        });
+
+        modelBuilder.Entity<IncomeCategory>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("incomecategory_pkey");
+
+            entity.ToTable("IncomeCategory");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("nextval('incomecategory_id_seq'::regclass)")
+                .HasColumnName("id");
+            entity.Property(e => e.Category)
+                .HasMaxLength(255)
+                .HasColumnName("category");
+        });
+
+        modelBuilder.Entity<Saving>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("savings_pkey");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("nextval('savings_id_seq'::regclass)")
+                .HasColumnName("id");
+            entity.Property(e => e.CreatedDate).HasColumnName("created_date");
+            entity.Property(e => e.CurrentAmount)
+                .HasPrecision(19)
+                .HasColumnName("current_amount");
+            entity.Property(e => e.GoalName)
+                .HasMaxLength(255)
+                .HasColumnName("goal_name");
+            entity.Property(e => e.ProgressPercent).HasColumnName("progress_percent");
+            entity.Property(e => e.TargetAmount)
+                .HasPrecision(19)
+                .HasColumnName("target_amount");
+            entity.Property(e => e.TargetDate).HasColumnName("target_date");
+            entity.Property(e => e.Userid).HasColumnName("userid");
+
+            entity.HasOne(d => d.User).WithMany(p => p.Savings)
+                .HasForeignKey(d => d.Userid)
+                .HasConstraintName("savings_userid_fkey");
+        });
+
+        modelBuilder.Entity<TransferToSaving>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("transfertosavings_pkey");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("nextval('transfertosavings_id_seq'::regclass)")
+                .HasColumnName("id");
+            entity.Property(e => e.Date).HasColumnName("date");
+            entity.Property(e => e.Description)
+                .HasMaxLength(255)
+                .HasColumnName("description");
+            entity.Property(e => e.Isdeposit).HasColumnName("isdeposit");
+            entity.Property(e => e.Savingsid).HasColumnName("savingsid");
+            entity.Property(e => e.Sum)
+                .HasPrecision(19)
+                .HasColumnName("sum");
+            entity.Property(e => e.Userid).HasColumnName("userid");
+
+            entity.HasOne(d => d.Savings).WithMany(p => p.TransferToSavings)
+                .HasForeignKey(d => d.Savingsid)
+                .HasConstraintName("transfertosavings_savingsid_fkey");
+
+            entity.HasOne(d => d.User).WithMany(p => p.TransferToSavings)
+                .HasForeignKey(d => d.Userid)
+                .HasConstraintName("transfertosavings_userid_fkey");
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("User_pkey");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("nextval('\"User_id_seq\"'::regclass)")
+                .HasColumnName("id");
+            entity.Property(e => e.Budgetid).HasColumnName("budgetid");
+            entity.Property(e => e.Email)
+                .HasMaxLength(255)
+                .HasColumnName("email");
+            entity.Property(e => e.Familyid).HasColumnName("familyid");
+            entity.Property(e => e.Name)
+                .HasMaxLength(255)
+                .HasColumnName("name");
+            entity.Property(e => e.PasswordHash)
+                .HasMaxLength(255)
+                .HasColumnName("password_hash");
+
+            entity.HasOne(d => d.Budget).WithMany(p => p.Users)
+                .HasForeignKey(d => d.Budgetid)
+                .HasConstraintName("User_budgetid_fkey");
+
+            entity.HasOne(d => d.Family).WithMany(p => p.Users)
+                .HasForeignKey(d => d.Familyid)
+                .HasConstraintName("User_familyid_fkey");
+        });
+
+        modelBuilder.Entity<Wallet>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("wallet_pkey");
+
+            entity.ToTable("Wallet");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("nextval('wallet_id_seq'::regclass)")
+                .HasColumnName("id");
+            entity.Property(e => e.Balance)
+                .HasPrecision(19)
+                .HasDefaultValue(0m)
+                .HasColumnName("balance");
+            entity.Property(e => e.Currency)
+                .HasMaxLength(10)
+                .HasDefaultValueSql("'RUB'::character varying")
+                .HasColumnName("currency");
+            entity.Property(e => e.Name)
+                .HasMaxLength(255)
+                .HasColumnName("name");
+            entity.Property(e => e.Userid).HasColumnName("userid");
+
+            entity.HasOne(d => d.User).WithMany(p => p.Wallets)
+                .HasForeignKey(d => d.Userid)
+                .HasConstraintName("wallet_userid_fkey");
+        });
+
+        OnModelCreatingPartial(modelBuilder);
+    }
+
+    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+}
+
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+
+namespace LepreCoinsApp.ViewModels
+{
+    public class BaseViewModel : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        // Метод для обновления значения свойства и уведомления интерфейса
+        protected void OnPropertyChanged([CallerMemberName] string name = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+
+        protected bool SetProperty<T>(ref T backingStore, T value, [CallerMemberName] string propertyName = "", System.Action onChanged = null)
+        {
+            if (System.Collections.Generic.EqualityComparer<T>.Default.Equals(backingStore, value))
+                return false;
+
+            backingStore = value;
+            onChanged?.Invoke();
+            OnPropertyChanged(propertyName);
+            return true;
+        }
+    }
+}
+
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+using ApplicationCore.DTO;
+using ApplicationCore.Interfaces;
+using System.Windows.Input; // Для команд
+
+namespace LepreCoinsApp.ViewModels
+{
+    public class ReportsViewModel : BaseViewModel
+    {
+        private readonly ITransactionService _transactionService;
+
+        // Коллекция, которая автоматически обновляет список на экране
+        public ObservableCollection<TransactionDto> Transactions { get; } = new();
+
+        public ReportsViewModel(ITransactionService transactionService)
+        {
+            _transactionService = transactionService;
+            // Загружаем данные при создании
+            LoadDataCommand = new Command(async () => await LoadDataAsync());
+        }
+
+        public ICommand LoadDataCommand { get; }
+
+        public async Task LoadDataAsync()
+        {
+            // Получаем данные из сервиса
+            var list = await _transactionService.GetRecentTransactionsAsync();
+
+            Transactions.Clear();
+            foreach (var item in list)
+            {
+                Transactions.Add(item);
+            }
+        }
+    }
+}
+
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="LepreCoinsApp.Pages.BudgetPage"
+             Title="BudgetPage">
+    <VerticalStackLayout>
+        <Label 
+            Text="Welcome to .NET MAUI!"
+            VerticalOptions="Center" 
+            HorizontalOptions="Center" />
+    </VerticalStackLayout>
+</ContentPage>
+
+namespace LepreCoinsApp.Pages;
+
+public partial class BudgetPage : ContentPage
+{
+	public BudgetPage()
+	{
+		InitializeComponent();
+	}
+}
+
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="LepreCoinsApp.Pages.MainPage">
+
+    <ScrollView>
+        <Grid x:Name="TilesGrid" Padding="15" RowSpacing="15" ColumnSpacing="15">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border x:Name="IncomeTile" Grid.Row="0" Grid.Column="0"
+                    HeightRequest="200"
+                    Opacity="0" TranslationY="50">
+                <Border.GestureRecognizers>
+                    <PointerGestureRecognizer PointerEntered="OnTileEntered" PointerExited="OnTileExited">
+                    </PointerGestureRecognizer>
+                </Border.GestureRecognizers>
+                <StackLayout Spacing="10">
+                    <Label Text="Доходы" FontFamily="ActayWide-Bold" FontSize="18" FontAttributes="Bold"/>
+                    <BoxView Color="#BB86FC" VerticalOptions="Fill" CornerRadius="10" />
+                </StackLayout>
+            </Border>
+
+            <Border x:Name="ExpenseTile" Grid.Row="0" Grid.Column="1"
+                    HeightRequest="200"
+                    Opacity="0" TranslationY="50">
+                <Border.GestureRecognizers>
+                    <PointerGestureRecognizer PointerEntered="OnTileEntered" PointerExited="OnTileExited">
+                    </PointerGestureRecognizer>
+                </Border.GestureRecognizers>
+                <StackLayout Spacing="10">
+                    <Label Text="Расходы" FontFamily="ActayWide-Bold" FontSize="18" FontAttributes="Bold"/>
+                    <BoxView Color="#03DAC6" VerticalOptions="Fill" CornerRadius="10"/>
+                </StackLayout>
+            </Border>
+
+            <Border x:Name="SavingsTile" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                    HeightRequest="150"
+                    Opacity="0" TranslationY="50">
+                <Border.GestureRecognizers>
+                    <PointerGestureRecognizer PointerEntered="OnTileEntered" PointerExited="OnTileExited">
+                    </PointerGestureRecognizer>
+                </Border.GestureRecognizers>
+                <StackLayout Spacing="10">
+                    <Label Text="Отчёт по накоплениям" FontFamily="ActayWide-Bold" FontSize="18" FontAttributes="Bold"/>
+                    <BoxView Color="#FFC107" VerticalOptions="Fill" CornerRadius="10"/>
+                </StackLayout>
+            </Border>
+
+            <Border x:Name="RecentTile" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                    HeightRequest="150"
+                    Opacity="0" TranslationY="50">
+                <Border.GestureRecognizers>
+                    <PointerGestureRecognizer PointerEntered="OnTileEntered" PointerExited="OnTileExited">
+                    </PointerGestureRecognizer>
+                </Border.GestureRecognizers>
+                <StackLayout Spacing="10">
+                    <Label Text="Последние транзакции" FontFamily="ActayWide-Bold" FontSize="18" FontAttributes="Bold"/>
+                    <BoxView Color="#FF5722" VerticalOptions="Fill" CornerRadius="10"/>
+                </StackLayout>
+            </Border>
+
+        </Grid>
+    </ScrollView>
+</ContentPage>
+
+using Microsoft.Maui.Controls;
+using System.Threading.Tasks;
+
+namespace LepreCoinsApp.Pages
+{
+    public partial class MainPage : ContentPage
+    {
+        public MainPage()
+        {
+            InitializeComponent();
+        }
+
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+
+            // Сбрасываем плитки в исходное состояние
+            var tiles = new[] { IncomeTile, ExpenseTile, SavingsTile, RecentTile };
+            foreach (var tile in tiles)
+                ResetTile(tile);
+
+            // Анимация появления плиток каскадом
+            uint delay = 0;
+            foreach (var tile in tiles)
+            {
+                await AnimateTile(tile, delay);
+                delay += 100; // небольшая задержка между плитками
+            }
+        }
+
+        // Сброс плитки в начальное состояние
+        private void ResetTile(View tile)
+        {
+            tile.Opacity = 0;
+            tile.TranslationY = 50;
+            tile.Scale = 0.95; // начальный размер чуть меньше
+        }
+
+        // Анимация появления плитки
+        private async Task AnimateTile(View tile, uint delay)
+        {
+            await Task.Delay((int)delay);
+
+            await Task.WhenAll(
+                tile.FadeToAsync(1, 350, Easing.CubicInOut),
+                tile.TranslateToAsync(0, 0, 350, Easing.CubicOut),
+                tile.ScaleToAsync(1.0, 350, Easing.CubicOut)
+            );
+        }
+
+        // Эффект при наведении курсора (увеличение плитки)
+        private async void OnTileEntered(object sender, PointerEventArgs e)
+        {
+            if (sender is View tile)
+            {
+                await tile.ScaleToAsync(1.03, 120, Easing.CubicOut);
+                tile.Opacity = 0.97; // лёгкий эффект фокуса
+            }
+        }
+
+        // Эффект при уходе курсора (возврат к нормальному размеру)
+        private async void OnTileExited(object sender, PointerEventArgs e)
+        {
+            if (sender is View tile)
+            {
+                await tile.ScaleToAsync(1.0, 120, Easing.CubicOut);
+                tile.Opacity = 1.0;
+            }
+        }
+    }
+}
+
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="LepreCoinsApp.Pages.ReportsPage"
+             Title="ReportsPage">
+    <Grid>
+
+        <!-- Таблица отчётов -->
+        <CollectionView ItemsSource="{Binding Transactions}" Margin="10,10,10,100">
+            <CollectionView.Header>
+                <Grid Padding="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="100"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Label Grid.Column="0" Text="Дата" FontAttributes="Bold" FontFamily="ActayWide-Bold"/>
+                    <Label Grid.Column="1" Text="Операция" FontAttributes="Bold" FontFamily="ActayWide-Bold"/>
+                    <Label Grid.Column="2" Text="Категория" FontAttributes="Bold" FontFamily="ActayWide-Bold"/>
+                    <Label Grid.Column="3" Text="Сумма" FontAttributes="Bold" FontFamily="ActayWide-Bold"/>
+                </Grid>
+            </CollectionView.Header>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="100"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Label Grid.Column="0" Text="{Binding Date, StringFormat='{0:dd.MM.yyyy}'}" FontFamily="ActayRegular"/>
+                        <Label Grid.Column="1" Text="{Binding Operation}" FontFamily="ActayRegular"/>
+                        <Label Grid.Column="2" Text="{Binding Category}" FontFamily="ActayRegular"/>
+                        <Label Grid.Column="3" Text="{Binding Amount}" FontFamily="ActayRegular"/>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- FAB и кнопки меню -->
+        <AbsoluteLayout>
+            <!-- Кнопки выезжающего меню -->
+            <Button x:Name="IncomeButton" Text="Доход" FontFamily="ActayWide-Bold" TextColor="White"
+             IsVisible="False" WidthRequest="100" HeightRequest="50" Clicked="OnIncomeClicked"
+             AbsoluteLayout.LayoutFlags="PositionProportional"
+             AbsoluteLayout.LayoutBounds="0.95,0.95,AutoSize,AutoSize"/>
+            <Button x:Name="ExpenseButton" Text="Расход" FontFamily="ActayWide-Bold" TextColor="White"
+             IsVisible="False" WidthRequest="100" HeightRequest="50" Clicked="OnExpenseClicked"
+             AbsoluteLayout.LayoutFlags="PositionProportional"
+             AbsoluteLayout.LayoutBounds="0.95,0.95,AutoSize,AutoSize"/>
+
+            <!-- Glow Circle -->
+            <BoxView x:Name="GlowCircle" Color="WhiteSmoke" CornerRadius="30"
+              HeightRequest="60" WidthRequest="60"
+              AbsoluteLayout.LayoutFlags="PositionProportional"
+              AbsoluteLayout.LayoutBounds="0.95,0.95,AutoSize,AutoSize"
+              Opacity="0" />
+
+            <!-- FAB -->
+            <Button x:Name="MainFab"
+             Text="+"
+             FontSize="30"
+             CornerRadius="30"
+             HeightRequest="60"
+             WidthRequest="60"
+             Clicked="OnFabClicked"
+             BackgroundColor="#BB86FC"
+             TextColor="White"
+             AbsoluteLayout.LayoutFlags="PositionProportional"
+             AbsoluteLayout.LayoutBounds="0.95,0.95,AutoSize,AutoSize"
+             ZIndex="10"/>
+        </AbsoluteLayout>
+
+        <!-- Затемняющий фон и Popup -->
+        <Grid x:Name="PopupOverlay"
+       IsVisible="False"
+       BackgroundColor="#CC000000"
+       Opacity="0">
+
+            <Frame x:Name="TransactionPopup"
+            BackgroundColor="#222222"
+            CornerRadius="15"
+            Padding="20"
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            WidthRequest="300">
+
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto">
+                    <Label Text="{Binding PopupOperationType}" FontAttributes="Bold" TextColor="White" FontFamily="ActayWide-Bold" Grid.Row="0" HorizontalOptions="Center"/>
+
+                    <Entry x:Name="CategoryEntry" Placeholder="Категория" TextColor="White" FontFamily="ActayRegular" Grid.Row="1"/>
+                    <Entry x:Name="AmountEntry" Placeholder="Сумма" Keyboard="Numeric" TextColor="White" FontFamily="ActayRegular" Grid.Row="2"/>
+
+                    <HorizontalStackLayout Grid.Row="3" Spacing="10" HorizontalOptions="End">
+                        <Button Text="Отмена" Clicked="OnPopupCancelClicked"/>
+                        <Button Text="Добавить" Clicked="OnPopupAddClicked"/>
+                    </HorizontalStackLayout>
+                </Grid>
+            </Frame>
+        </Grid>
+    </Grid>
+</ContentPage>
+
+using LepreCoinsApp.ViewModels;
+
+namespace LepreCoinsApp.Pages;
+
+public partial class ReportsPage : ContentPage
+{
+    private readonly ReportsViewModel _viewModel;
+
+    public ReportsPage(ReportsViewModel viewModel)
+    {
+        InitializeComponent();
+        _viewModel = viewModel;
+        BindingContext = _viewModel; // Связываем XAML с кодом
+    }
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        await _viewModel.LoadDataAsync();
+    }
+}
+
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="LepreCoinsApp.Pages.SettingsPage"
+             Title="SettingsPage">
+    <StackLayout Padding="20" Spacing="15">
+        <Label Text="Настройки приложения" FontFamily="ActayWide-Bold" FontSize="24" TextColor="White"/>
+
+        <Button Text="Изменить тему" FontFamily="ActayWide-Bold" TextColor="White" BackgroundColor="#333333" CornerRadius="10"/>
+        <Button Text="Сбросить данные" FontFamily="ActayWide-Bold" TextColor="White" BackgroundColor="#333333" CornerRadius="10"/>
+    </StackLayout>
+</ContentPage>
+
+namespace LepreCoinsApp.Pages;
+
+public partial class SettingsPage : ContentPage
+{
+	public SettingsPage()
+	{
+		InitializeComponent();
+	}
+}
+
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:LepreCoinsApp"
+             x:Class="LepreCoinsApp.App">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
+                <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
+
+
+using Microsoft.Extensions.DependencyInjection;
+
+namespace LepreCoinsApp
+{
+    public partial class App : Application
+    {
+        public App()
+        {
+            InitializeComponent();
+        }
+
+        protected override Window CreateWindow(IActivationState? activationState)
+        {
+            return new Window(new AppShell());
+        }
+    }
+}
+
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost;Port=5432;Database=familybudgetdb;User Id=postgres;Password=12345;"
+  },
+  "AllowedHosts": "*"
+}
+
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="LepreCoinsApp.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:LepreCoinsApp"
+    xmlns:pages="clr-namespace:LepreCoinsApp.Pages"
+    Shell.FlyoutBehavior="Locked"
+    Shell.FlyoutBackgroundColor="{StaticResource Gray900}"
+    Title="Курсовой"
+
+    >
+
+    <Shell.ItemTemplate>
+        <DataTemplate>
+            <Grid HeightRequest="40" >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="50" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Image Source="{Binding Icon}" Grid.Column="0" VerticalOptions="Center" HorizontalOptions="Center" HeightRequest="24" />
+
+                <Label Text="{Binding Title}" 
+                       Grid.Column="1" 
+                       FontFamily="ActayWide-Bold"
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center" 
+                       TextColor="#E0E0E0" />
+            </Grid>
+        </DataTemplate>
+    </Shell.ItemTemplate>
+
+    <Shell.FlyoutHeader>
+        <Grid HeightRequest="150" BackgroundColor="{StaticResource Gray900}">
+            <Label Text="LepreCoins"
+               FontFamily="SC-Circular"
+               FontSize="56"
+               Margin="20"
+               TextColor="#E0E0E0"
+               HorizontalOptions="Center"
+               VerticalOptions="Center">
+            </Label>
+
+        </Grid>
+    </Shell.FlyoutHeader>
+
+    <FlyoutItem Title="Главная" Icon="home.png" >
+        <ShellContent ContentTemplate="{DataTemplate pages:MainPage}" Route="MainPage" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Бюджет" Icon="budget.png">
+        <ShellContent ContentTemplate="{DataTemplate pages:BudgetPage}" Route="BudgetPage" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="История"  Icon="history.png">
+        <ShellContent 
+        ContentTemplate="{DataTemplate pages:ReportsPage}" 
+        Route="ReportsPage" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Настройки" Icon="settings.png">
+        <ShellContent ContentTemplate="{DataTemplate pages:SettingsPage}" Route="SettingsPage"/>
+    </FlyoutItem>
+    <FlyoutItem Title="Профиль" Icon="profile.png">
+        <ShellContent ContentTemplate="{DataTemplate pages:SettingsPage}" Route="ProfilePage"/>
+    </FlyoutItem>
+    <Shell.FlyoutFooter CornerRadius="0">
+        <HorizontalStackLayout>
+            <Label FontFamily="Actay-Regular" FontSize="11" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" >ver 0.01 / разработчик: Иванов Н.И.</Label>
+        </HorizontalStackLayout>
+    </Shell.FlyoutFooter>
+
+
+</Shell>
+
+namespace LepreCoinsApp;
+
+public partial class AppShell : Shell
+{
+    public AppShell()
+    {
+        InitializeComponent();
+    }
+    private async void ExitClicked(object sender, EventArgs e)
+    {
+        Application.Current.Quit();
+    }
+
+}
+
+using LepreCoinsApp;
+using Microsoft.Extensions.Logging;
+
+namespace LepreCoinsApp
+{
+    public static class MauiProgram
+    {
+        public static MauiApp CreateMauiApp()
+        {
+            var builder = MauiApp.CreateBuilder();
+            builder
+                .UseMauiApp<App>()
+                .ConfigureFonts(fonts =>
+                {
+                    //fonts.AddFont("ActayWide-Bold.ttf", "ActayWide-Bold");
+                    fonts.AddFont("SC-Circular.ttf", "SC-Circular");
+                });
+
+#if DEBUG
+            builder.Logging.AddDebug();
+#endif      
+            bool needToCreateDB = false;
+            if (needToCreateDB)
+            {
+                
+            }
+            //builder.Services.AddScoped<ITransactionService, TransactionService>();
+            return builder.Build();
+        }
+    }
+}
+
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DomainModel\DomainModel.csproj" />
+  </ItemGroup>
+
+</Project>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Interfaces\Interfaces.csproj" />
+    <ProjectReference Include="..\LC.DAL\LC.DAL.csproj" />
+  </ItemGroup>
+
+</Project>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql" Version="10.0.1" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DomainModel\DomainModel.csproj" />
+    <ProjectReference Include="..\Interfaces\Interfaces.csproj" />
+  </ItemGroup>
+
+</Project>
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net10.0-android;net10.0-ios;net10.0-maccatalyst</TargetFrameworks>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
+
+		<!-- Note for MacCatalyst:
+		The default runtime is maccatalyst-x64, except in Release config, in which case the default is maccatalyst-x64;maccatalyst-arm64.
+		When specifying both architectures, use the plural <RuntimeIdentifiers> instead of the singular <RuntimeIdentifier>.
+		The Mac App Store will NOT accept apps with ONLY maccatalyst-arm64 indicated;
+		either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
+		<!-- For example: <RuntimeIdentifiers>maccatalyst-x64;maccatalyst-arm64</RuntimeIdentifiers> -->
+
+		<OutputType>Exe</OutputType>
+		<RootNamespace>LepreCoinsApp</RootNamespace>
+		<UseMaui>true</UseMaui>
+		<SingleProject>true</SingleProject>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+
+		<!-- Display name -->
+		<ApplicationTitle>LepreCoinsApp</ApplicationTitle>
+
+		<!-- App Identifier -->
+		<ApplicationId>com.companyname.leprecoinsapp</ApplicationId>
+
+		<!-- Versions -->
+		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+		<ApplicationVersion>1</ApplicationVersion>
+
+		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
+		<WindowsPackageType>None</WindowsPackageType>
+
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
+		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- App Icon -->
+		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
+
+		<!-- Splash Screen -->
+		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+
+		<!-- Images -->
+		<MauiImage Include="Resources\Images\*" />
+		
+		<!-- Custom Fonts -->
+		<MauiFont Include="Resources\Fonts\*" />
+
+		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
+		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.1">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.1">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\LC.BLL\LC.BLL.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <MauiFont Update="Resources\Fonts\SC-Circular.ttf">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </MauiFont>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <MauiXaml Update="Views\BudgetPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\MainPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\ReportsPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\SettingsPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	</ItemGroup>
+
+</Project>
+
+

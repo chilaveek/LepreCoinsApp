@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/ApplicationCore/">
+    <Project Path="DomainModel/DomainModel.csproj" Id="e5ae4318-0428-4678-8819-a19b973b433c" />
+    <Project Path="Interfaces/Interfaces.csproj" Id="9f8d04d9-e2a3-40c3-b06c-0cd0a5090777" />
+  </Folder>
+  <Folder Name="/Infrastructure/">
+    <Project Path="LC.BLL/LC.BLL.csproj" Id="e9769b58-042d-4fce-8df8-ac95bf1eb617" />
+    <Project Path="LC.DAL/LC.DAL.csproj" Id="aa5e1a86-dc4a-4501-9cb7-4d3367db396c" />
+  </Folder>
+  <Project Path="LepreCoinsApp/LepreCoinsApp.csproj">
+    <Deploy Solution="Debug|*" />
+  </Project>
+</Solution>

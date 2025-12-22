@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="LepreCoinsApp.Views.SettingsPage"
+             xmlns:viewModels="clr-namespace:LepreCoinsApp.ViewModels"
+             Title="Настройки"
+             BackgroundColor="#0F1419">
+
+    <ContentPage.BindingContext>
+        <viewModels:SettingsViewModel />
+    </ContentPage.BindingContext>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+
+            <!-- Заголовок -->
+            <Label Text="Настройки"
+                   FontSize="28"
+                   FontAttributes="Bold"
+                   TextColor="#333" />
+
+            <!-- Порог низкого баланса -->
+            <Frame BorderColor="#ddd" CornerRadius="10" Padding="15">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Порог уведомления о низком балансе"
+                           FontSize="14"
+                           TextColor="#666" />
+                    <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+                        <Slider Minimum="0"
+                                Maximum="100000"
+                                Value="{Binding LowBalanceThreshold}"
+                                ValueChanged="OnLowBalanceThresholdChanged"
+                                HorizontalOptions="FillAndExpand" />
+                        <Label Text="{Binding LowBalanceThreshold, StringFormat='{0:C}'}"
+                               WidthRequest="90"
+                               HorizontalTextAlignment="End" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Тема и уведомления -->
+            <Frame BorderColor="#ddd" CornerRadius="10" Padding="15">
+                <VerticalStackLayout Spacing="15">
+
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                        <Label Text="Тёмная тема"
+                               FontSize="14"
+                               VerticalOptions="Center" />
+                        <Switch Grid.Column="1"
+                                IsToggled="{Binding IsDarkMode}"
+                                Toggled="OnThemeToggled" />
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                        <Label Text="Уведомления"
+                               FontSize="14"
+                               VerticalOptions="Center" />
+                        <Switch Grid.Column="1"
+                                IsToggled="{Binding EnableNotifications}" />
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                        <Label Text="Офлайн-режим"
+                               FontSize="14"
+                               VerticalOptions="Center" />
+                        <Switch Grid.Column="1"
+                                IsToggled="{Binding EnableOfflineMode}" />
+                    </Grid>
+
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Валюта -->
+            <Frame BorderColor="#ddd" CornerRadius="10" Padding="15">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Валюта"
+                           FontSize="14"
+                           TextColor="#666" />
+                    <Picker SelectedItem="{Binding Currency}">
+                        <Picker.Items>
+                            <x:String>RUB</x:String>
+                            <x:String>USD</x:String>
+                            <x:String>EUR</x:String>
+                        </Picker.Items>
+                    </Picker>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Кнопки действий -->
+            <VerticalStackLayout Spacing="10">
+
+                <Button Text="💾 Сохранить настройки"
+                        Command="{Binding SaveSettingsCommand}"
+                        BackgroundColor="#27ae60"
+                        TextColor="White"
+                        CornerRadius="8" />
+
+                <Button Text="🧹 Очистить кэш"
+                        Clicked="OnClearCacheClicked"
+                        BackgroundColor="#e67e22"
+                        TextColor="White"
+                        CornerRadius="8" />
+
+                <Button Text="🔄 Проверить обновления"
+                        Command="{Binding CheckForUpdatesCommand}"
+                        BackgroundColor="#3498db"
+                        TextColor="White"
+                        CornerRadius="8" />
+
+                <Button Text="🚪 Выйти из аккаунта"
+                        Clicked="OnLogoutClicked"
+                        BackgroundColor="#e74c3c"
+                        TextColor="White"
+                        CornerRadius="8" />
+            </VerticalStackLayout>
+
+            <!-- Версия приложения -->
+            <Label Text="{Binding AppVersion, StringFormat='Версия приложения: {0}'}"
+                   FontSize="12"
+                   TextColor="#999"
+                   HorizontalOptions="Center"
+                   Margin="0,20,0,0" />
+
+            <!-- Индикатор загрузки -->
+            <StackLayout IsVisible="{Binding IsBusy}" Spacing="5" HorizontalOptions="Center">
+                <ActivityIndicator IsRunning="{Binding IsBusy}" />
+                <Label Text="{Binding BusyText}" FontSize="12" TextColor="#999" />
+            </StackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
