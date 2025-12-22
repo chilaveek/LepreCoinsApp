@@ -1,297 +1,242 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace LepreCoins.Models;
 
 public partial class FamilybudgetdbContext : DbContext
 {
-    public FamilybudgetdbContext()
-    {
-    }
-
     public FamilybudgetdbContext(DbContextOptions<FamilybudgetdbContext> options)
         : base(options)
     {
     }
 
-    public virtual DbSet<Budget> Budgets { get; set; }
-
-    public virtual DbSet<Expense> Expenses { get; set; }
-
-    public virtual DbSet<ExpenseCategory> ExpenseCategories { get; set; }
-
-    public virtual DbSet<Family> Families { get; set; }
-
-    public virtual DbSet<Income> Incomes { get; set; }
-
-    public virtual DbSet<IncomeCategory> IncomeCategories { get; set; }
-
-    public virtual DbSet<Saving> Savings { get; set; }
-
-    public virtual DbSet<TransferToSaving> TransferToSavings { get; set; }
-
-    public virtual DbSet<User> Users { get; set; }
-
-    public virtual DbSet<Wallet> Wallets { get; set; }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseNpgsql("Server=localhost;Port=5432;Database=familybudgetdb;User Id=postgres;Password=12345;");
+    public DbSet<Budget> Budgets => Set<Budget>();
+    public DbSet<Expense> Expenses => Set<Expense>();
+    public DbSet<ExpenseCategory> ExpenseCategories => Set<ExpenseCategory>();
+    public DbSet<Family> Families => Set<Family>();
+    public DbSet<Income> Incomes => Set<Income>();
+    public DbSet<IncomeCategory> IncomeCategories => Set<IncomeCategory>();
+    public DbSet<Saving> Savings => Set<Saving>();
+    public DbSet<TransferToSaving> TransferToSavings => Set<TransferToSaving>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Wallet> Wallets => Set<Wallet>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // ===== BUDGET =====
         modelBuilder.Entity<Budget>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("budget_pkey");
-
-            entity.ToTable("Budget");
+            entity.ToTable("budget");
+            entity.HasKey(e => e.Id);
 
             entity.Property(e => e.Id)
-                .HasDefaultValueSql("nextval('budget_id_seq'::regclass)")
-                .HasColumnName("id");
-            entity.Property(e => e.CurrentExpenses)
-                .HasPrecision(19)
-                .HasColumnName("current_expenses");
+                .ValueGeneratedOnAdd();
+
             entity.Property(e => e.EstablishedAmount)
-                .HasPrecision(19)
-                .HasColumnName("established_amount");
-            entity.Property(e => e.PeriodEnd).HasColumnName("period_end");
-            entity.Property(e => e.PeriodStart).HasColumnName("period_start");
+                .HasPrecision(19);
+
+            entity.Property(e => e.CurrentExpenses)
+                .HasPrecision(19);
         });
 
+        // ===== EXPENSE =====
         modelBuilder.Entity<Expense>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("expense_pkey");
-
-            entity.ToTable("Expense");
+            entity.ToTable("expense");
+            entity.HasKey(e => e.Id);
 
             entity.Property(e => e.Id)
-                .HasDefaultValueSql("nextval('expense_id_seq'::regclass)")
-                .HasColumnName("id");
-            entity.Property(e => e.Categoryid).HasColumnName("categoryid");
-            entity.Property(e => e.Date).HasColumnName("date");
-            entity.Property(e => e.Description)
-                .HasMaxLength(255)
-                .HasColumnName("description");
-            entity.Property(e => e.ExpenseType)
-                .HasMaxLength(255)
-                .HasColumnName("expense_type");
+                .ValueGeneratedOnAdd();
+
             entity.Property(e => e.Sum)
-                .HasPrecision(19)
-                .HasColumnName("sum");
-            entity.Property(e => e.Userid).HasColumnName("userid");
-            entity.Property(e => e.Walletid).HasColumnName("walletid");
+                .HasPrecision(19);
 
-            entity.HasOne(d => d.Category).WithMany(p => p.Expenses)
-                .HasForeignKey(d => d.Categoryid)
-                .HasConstraintName("expense_categoryid_fkey");
+            entity.Property(e => e.Description)
+                .HasMaxLength(255);
 
-            entity.HasOne(d => d.User).WithMany(p => p.Expenses)
-                .HasForeignKey(d => d.Userid)
-                .HasConstraintName("expense_userid_fkey");
+            entity.HasOne(e => e.Category)
+                .WithMany(c => c.Expenses)
+                .HasForeignKey(e => e.Categoryid);
 
-            entity.HasOne(d => d.Wallet).WithMany(p => p.Expenses)
-                .HasForeignKey(d => d.Walletid)
-                .HasConstraintName("expense_walletid_fkey");
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.Expenses)
+                .HasForeignKey(e => e.Userid);
+
+            entity.HasOne(e => e.Wallet)
+                .WithMany(w => w.Expenses)
+                .HasForeignKey(e => e.Walletid);
         });
 
+        // ===== EXPENSE CATEGORY =====
         modelBuilder.Entity<ExpenseCategory>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("expensecategory_pkey");
-
-            entity.ToTable("ExpenseCategory");
+            entity.ToTable("expense_category");
+            entity.HasKey(e => e.Id);
 
             entity.Property(e => e.Id)
-                .HasDefaultValueSql("nextval('expensecategory_id_seq'::regclass)")
-                .HasColumnName("id");
-            entity.Property(e => e.Attribute)
-                .HasMaxLength(255)
-                .HasColumnName("attribute");
-            entity.Property(e => e.Budgetid).HasColumnName("budgetid");
-            entity.Property(e => e.CategoryType)
-                .HasMaxLength(255)
-                .HasColumnName("category_type");
-            entity.Property(e => e.Name)
-                .HasMaxLength(255)
-                .HasColumnName("name");
+                .ValueGeneratedOnAdd();
 
-            entity.HasOne(d => d.Budget).WithMany(p => p.ExpenseCategories)
-                .HasForeignKey(d => d.Budgetid)
-                .HasConstraintName("expensecategory_budgetid_fkey");
+            entity.Property(e => e.Name)
+                .HasMaxLength(255);
+
+            entity.Property(e => e.CategoryType)
+                .HasMaxLength(255);
+
+            entity.HasOne(e => e.Budget)
+                .WithMany(b => b.ExpenseCategories)
+                .HasForeignKey(e => e.Budgetid);
         });
 
+        // ===== FAMILY =====
         modelBuilder.Entity<Family>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("family_pkey");
-
-            entity.ToTable("Family");
+            entity.ToTable("family");
+            entity.HasKey(e => e.Id);
 
             entity.Property(e => e.Id)
-                .HasDefaultValueSql("nextval('family_id_seq'::regclass)")
-                .HasColumnName("id");
+                .ValueGeneratedOnAdd();
+
             entity.Property(e => e.Name)
-                .HasMaxLength(255)
-                .HasColumnName("name");
+                .HasMaxLength(255);
         });
 
+        // ===== INCOME =====
         modelBuilder.Entity<Income>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("income_pkey");
-
-            entity.ToTable("Income");
+            entity.ToTable("income");
+            entity.HasKey(e => e.Id);
 
             entity.Property(e => e.Id)
-                .HasDefaultValueSql("nextval('income_id_seq'::regclass)")
-                .HasColumnName("id");
-            entity.Property(e => e.Date).HasColumnName("date");
-            entity.Property(e => e.Description)
-                .HasMaxLength(255)
-                .HasColumnName("description");
-            entity.Property(e => e.Incomecategoryid).HasColumnName("incomecategoryid");
+                .ValueGeneratedOnAdd();
+
             entity.Property(e => e.Sum)
-                .HasPrecision(19)
-                .HasColumnName("sum");
-            entity.Property(e => e.Userid).HasColumnName("userid");
-            entity.Property(e => e.Walletid).HasColumnName("walletid");
+                .HasPrecision(19);
 
-            entity.HasOne(d => d.Incomecategory).WithMany(p => p.Incomes)
-                .HasForeignKey(d => d.Incomecategoryid)
-                .HasConstraintName("income_incomecategoryid_fkey");
+            entity.Property(e => e.Description)
+                .HasMaxLength(255);
 
-            entity.HasOne(d => d.User).WithMany(p => p.Incomes)
-                .HasForeignKey(d => d.Userid)
-                .HasConstraintName("income_userid_fkey");
+            entity.HasOne(e => e.Incomecategory)
+                .WithMany(c => c.Incomes)
+                .HasForeignKey(e => e.Incomecategoryid);
 
-            entity.HasOne(d => d.Wallet).WithMany(p => p.Incomes)
-                .HasForeignKey(d => d.Walletid)
-                .HasConstraintName("income_walletid_fkey");
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.Incomes)
+                .HasForeignKey(e => e.Userid);
+
+            entity.HasOne(e => e.Wallet)
+                .WithMany(w => w.Incomes)
+                .HasForeignKey(e => e.Walletid);
         });
 
+        // ===== INCOME CATEGORY =====
         modelBuilder.Entity<IncomeCategory>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("incomecategory_pkey");
-
-            entity.ToTable("IncomeCategory");
+            entity.ToTable("income_category");
+            entity.HasKey(e => e.Id);
 
             entity.Property(e => e.Id)
-                .HasDefaultValueSql("nextval('incomecategory_id_seq'::regclass)")
-                .HasColumnName("id");
+                .ValueGeneratedOnAdd();
+
             entity.Property(e => e.Category)
-                .HasMaxLength(255)
-                .HasColumnName("category");
+                .HasMaxLength(255);
         });
 
+        // ===== SAVING =====
         modelBuilder.Entity<Saving>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("savings_pkey");
+            entity.ToTable("saving");
+            entity.HasKey(e => e.Id);
 
             entity.Property(e => e.Id)
-                .HasDefaultValueSql("nextval('savings_id_seq'::regclass)")
-                .HasColumnName("id");
-            entity.Property(e => e.CreatedDate).HasColumnName("created_date");
-            entity.Property(e => e.CurrentAmount)
-                .HasPrecision(19)
-                .HasColumnName("current_amount");
-            entity.Property(e => e.GoalName)
-                .HasMaxLength(255)
-                .HasColumnName("goal_name");
-            entity.Property(e => e.ProgressPercent).HasColumnName("progress_percent");
-            entity.Property(e => e.TargetAmount)
-                .HasPrecision(19)
-                .HasColumnName("target_amount");
-            entity.Property(e => e.TargetDate).HasColumnName("target_date");
-            entity.Property(e => e.Userid).HasColumnName("userid");
+                .ValueGeneratedOnAdd();
 
-            entity.HasOne(d => d.User).WithMany(p => p.Savings)
-                .HasForeignKey(d => d.Userid)
-                .HasConstraintName("savings_userid_fkey");
+            entity.Property(e => e.GoalName)
+                .HasMaxLength(255);
+
+            entity.Property(e => e.TargetAmount)
+                .HasPrecision(19);
+
+            entity.Property(e => e.CurrentAmount)
+                .HasPrecision(19);
+
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.Savings)
+                .HasForeignKey(e => e.Userid);
         });
 
+        // ===== TRANSFER TO SAVING =====
         modelBuilder.Entity<TransferToSaving>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("transfertosavings_pkey");
+            entity.ToTable("transfer_to_saving");
+            entity.HasKey(e => e.Id);
 
             entity.Property(e => e.Id)
-                .HasDefaultValueSql("nextval('transfertosavings_id_seq'::regclass)")
-                .HasColumnName("id");
-            entity.Property(e => e.Date).HasColumnName("date");
-            entity.Property(e => e.Description)
-                .HasMaxLength(255)
-                .HasColumnName("description");
-            entity.Property(e => e.Isdeposit).HasColumnName("isdeposit");
-            entity.Property(e => e.Savingsid).HasColumnName("savingsid");
+                .ValueGeneratedOnAdd();
+
             entity.Property(e => e.Sum)
-                .HasPrecision(19)
-                .HasColumnName("sum");
-            entity.Property(e => e.Userid).HasColumnName("userid");
+                .HasPrecision(19);
 
-            entity.HasOne(d => d.Savings).WithMany(p => p.TransferToSavings)
-                .HasForeignKey(d => d.Savingsid)
-                .HasConstraintName("transfertosavings_savingsid_fkey");
+            entity.Property(e => e.Description)
+                .HasMaxLength(255);
 
-            entity.HasOne(d => d.User).WithMany(p => p.TransferToSavings)
-                .HasForeignKey(d => d.Userid)
-                .HasConstraintName("transfertosavings_userid_fkey");
+            entity.HasOne(e => e.Savings)
+                .WithMany(s => s.TransferToSavings)
+                .HasForeignKey(e => e.Savingsid);
+
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.TransferToSavings)
+                .HasForeignKey(e => e.Userid);
         });
 
+        // ===== USER =====
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("User_pkey");
+            entity.ToTable("user");
+            entity.HasKey(e => e.Id);
 
             entity.Property(e => e.Id)
-                .HasDefaultValueSql("nextval('\"User_id_seq\"'::regclass)")
-                .HasColumnName("id");
-            entity.Property(e => e.Budgetid).HasColumnName("budgetid");
-            entity.Property(e => e.Email)
-                .HasMaxLength(255)
-                .HasColumnName("email");
-            entity.Property(e => e.Familyid).HasColumnName("familyid");
+                .ValueGeneratedOnAdd();
+
             entity.Property(e => e.Name)
-                .HasMaxLength(255)
-                .HasColumnName("name");
+                .HasMaxLength(255);
+
+            entity.Property(e => e.Email)
+                .HasMaxLength(255);
+
             entity.Property(e => e.PasswordHash)
-                .HasMaxLength(255)
-                .HasColumnName("password_hash");
+                .HasMaxLength(255);
 
-            entity.HasOne(d => d.Budget).WithMany(p => p.Users)
-                .HasForeignKey(d => d.Budgetid)
-                .HasConstraintName("User_budgetid_fkey");
+            entity.HasOne(e => e.Family)
+                .WithMany(f => f.Users)
+                .HasForeignKey(e => e.Familyid);
 
-            entity.HasOne(d => d.Family).WithMany(p => p.Users)
-                .HasForeignKey(d => d.Familyid)
-                .HasConstraintName("User_familyid_fkey");
+            entity.HasOne(e => e.Budget)
+                .WithMany(b => b.Users)
+                .HasForeignKey(e => e.Budgetid);
         });
 
+        // ===== WALLET =====
         modelBuilder.Entity<Wallet>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("wallet_pkey");
-
-            entity.ToTable("Wallet");
+            entity.ToTable("wallet");
+            entity.HasKey(e => e.Id);
 
             entity.Property(e => e.Id)
-                .HasDefaultValueSql("nextval('wallet_id_seq'::regclass)")
-                .HasColumnName("id");
-            entity.Property(e => e.Balance)
-                .HasPrecision(19)
-                .HasDefaultValue(0m)
-                .HasColumnName("balance");
+                .ValueGeneratedOnAdd();
+
+            entity.Property(e => e.Name)
+                .HasMaxLength(255);
+
             entity.Property(e => e.Currency)
                 .HasMaxLength(10)
-                .HasDefaultValueSql("'RUB'::character varying")
-                .HasColumnName("currency");
-            entity.Property(e => e.Name)
-                .HasMaxLength(255)
-                .HasColumnName("name");
-            entity.Property(e => e.Userid).HasColumnName("userid");
+                .HasDefaultValue("RUB");
 
-            entity.HasOne(d => d.User).WithMany(p => p.Wallets)
-                .HasForeignKey(d => d.Userid)
-                .HasConstraintName("wallet_userid_fkey");
+            entity.Property(e => e.Balance)
+                .HasPrecision(19)
+                .HasDefaultValue(0m);
+
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.Wallets)
+                .HasForeignKey(e => e.Userid);
         });
-
-        OnModelCreatingPartial(modelBuilder);
     }
-
-    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
