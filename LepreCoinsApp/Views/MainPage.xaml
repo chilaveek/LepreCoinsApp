@@ -9,8 +9,8 @@
 
         <!-- Заголовок -->
         <StackLayout Grid.Row="0" Spacing="10">
-            <Label Text="Семейный Бюджет" FontSize="28" FontAttributes="Bold"/>
-            <Label Text="Управляйте бюджетом семьи эффективно" FontSize="14"/>
+            <Label Text="Семейный Бюджет" FontSize="28" FontAttributes="Bold" TextColor="White"/>
+            <Label Text="Управляйте бюджетом семьи эффективно" FontSize="14" TextColor="#ccc"/>
         </StackLayout>
 
         <!-- Основное содержимое -->
@@ -18,9 +18,9 @@
             <VerticalStackLayout Spacing="15" Padding="0,20,0,0">
 
                 <!-- Карточка общего баланса -->
-                <Frame BorderColor="#ddd" CornerRadius="10" Padding="20" HasShadow="True">
+                <Frame BorderColor="#ddd" CornerRadius="10" Padding="20" HasShadow="True" BackgroundColor="#1a1d21">
                     <VerticalStackLayout Spacing="10">
-                        <Label Text="Общий Баланс" FontSize="14"/>
+                        <Label Text="Общий Баланс" FontSize="14" TextColor="#999"/>
                         <Label Text="{Binding TotalBalance, StringFormat='{0:C}'}" 
                                FontSize="32" FontAttributes="Bold" TextColor="#2ecc71"/>
                     </VerticalStackLayout>
@@ -28,17 +28,17 @@
 
                 <!-- Статистика -->
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                    <Frame Grid.Column="0" BorderColor="#ddd" CornerRadius="10" Padding="15" HasShadow="True">
+                    <Frame Grid.Column="0" BorderColor="#ddd" CornerRadius="10" Padding="15" HasShadow="True" BackgroundColor="#1a1d21">
                         <VerticalStackLayout Spacing="5">
-                            <Label Text="Доходы" FontSize="12"/>
+                            <Label Text="Доходы" FontSize="12" TextColor="#999"/>
                             <Label Text="{Binding MonthlyIncome, StringFormat='{0:C}'}" 
                                    FontSize="18" FontAttributes="Bold" TextColor="#3498db"/>
                         </VerticalStackLayout>
                     </Frame>
 
-                    <Frame Grid.Column="1" BorderColor="#ddd" CornerRadius="10" Padding="15" HasShadow="True">
+                    <Frame Grid.Column="1" BorderColor="#ddd" CornerRadius="10" Padding="15" HasShadow="True" BackgroundColor="#1a1d21">
                         <VerticalStackLayout Spacing="5">
-                            <Label Text="Расходы" FontSize="12" TextColor="#666"/>
+                            <Label Text="Расходы" FontSize="12" TextColor="#999"/>
                             <Label Text="{Binding MonthlyExpenses, StringFormat='{0:C}'}" 
                                    FontSize="18" FontAttributes="Bold" TextColor="#e74c3c"/>
                         </VerticalStackLayout>
@@ -46,7 +46,7 @@
                 </Grid>
 
                 <!-- Действия -->
-                <Label Text="Быстрые действия" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0"/>
+                <Label Text="Быстрые действия" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0" TextColor="White"/>
 
                 <Button Text="+ Добавить расход" 
                         Command="{Binding AddExpenseCommand}"
@@ -61,24 +61,23 @@
                         CornerRadius="8"/>
 
                 <Button Text="📷 Сканировать чек"
-        Command="{Binding ScanReceiptCommand}"
-        BackgroundColor="#f39c12"
-        TextColor="White"
-        CornerRadius="8"/>
-
+                        Command="{Binding ScanReceiptCommand}"
+                        BackgroundColor="#f39c12"
+                        TextColor="White"
+                        CornerRadius="8"/>
 
                 <!-- Последние транзакции -->
-                <Label Text="Последние транзакции" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0"/>
+                <Label Text="Последние транзакции" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0" TextColor="White"/>
 
                 <CollectionView ItemsSource="{Binding Transactions}" SelectionMode="Single">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <Frame CornerRadius="8" Padding="15" Margin="0,5">
+                            <Frame CornerRadius="8" Padding="15" Margin="0,5" BackgroundColor="#1a1d21" BorderColor="#333">
                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="15">
                                     <VerticalStackLayout Grid.Column="0" Spacing="3">
-                                        <Label Text="{Binding Description}" FontSize="14" FontAttributes="Bold"/>
+                                        <Label Text="{Binding Description}" FontSize="14" FontAttributes="Bold" TextColor="White"/>
                                         <Label Text="{Binding Date, StringFormat='{0:dd.MM.yyyy HH:mm}'}" 
-                                               FontSize="12"/>
+                                               FontSize="12" TextColor="#999"/>
                                     </VerticalStackLayout>
                                     <Label Grid.Column="1" 
                                            Text="{Binding Amount, StringFormat='{0:C}'}" 
@@ -93,66 +92,97 @@
 
             </VerticalStackLayout>
         </ScrollView>
-        <!-- POPUP: Добавить/Редактировать операцию -->
-        <Grid IsVisible="{Binding IsTransactionPopupVisible}"
-      BackgroundColor="#80000000"
-      Grid.RowSpan="2"
-      ZIndex="100">
 
-            <Frame BackgroundColor="{StaticResource SecondaryBg}"
-           CornerRadius="18"
-           Padding="18"
-           WidthRequest="360"
-           HorizontalOptions="Center"
-           VerticalOptions="Center"
-           HasShadow="True">
+        <!-- POPUP OVERLAY -->
+        <AbsoluteLayout Grid.Row="0" Grid.RowSpan="2" IsVisible="{Binding IsTransactionPopupVisible}" 
+                        ZIndex="100"
+                        BackgroundColor="Transparent"
+                        InputTransparent="False">
+
+            <!-- Полупрозрачный фон -->
+            <BoxView Color="#80000000" 
+                     AbsoluteLayout.LayoutBounds="0,0,1,1" 
+                     AbsoluteLayout.LayoutFlags="All"/>
+
+            <!-- Модальное окно -->
+            <Frame BackgroundColor="#2a2d31"
+                   CornerRadius="18"
+                   Padding="18"
+                   WidthRequest="500"
+                   HasShadow="True"
+                   BorderColor="#444"
+                   AbsoluteLayout.LayoutBounds="0.5,0.5,-1,-1"
+                   AbsoluteLayout.LayoutFlags="PositionProportional">
 
                 <VerticalStackLayout Spacing="12">
 
                     <Label Text="{Binding TransactionPopupTitle}"
-                   Style="{StaticResource HeaderLabel}"
-                   FontSize="20"
-                   Margin="0,0,0,6"/>
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="White"
+                           Margin="0,0,0,6"/>
 
-                    <Label Text="Сумма" Style="{StaticResource SubLabel}" />
+                    <Label Text="Сумма" FontSize="12" FontAttributes="Bold" TextColor="#ccc"/>
                     <Entry Text="{Binding TransactionAmountText}"
-                   Keyboard="Numeric"
-                   Placeholder="Например: 1500.00"/>
+                           Keyboard="Numeric"
+                           Placeholder="Например: 1500.00"
+                           BackgroundColor="#1e1f22"
+                           TextColor="White"
+                           PlaceholderColor="#666"
+                           CornerRadius="6"
+                           Padding="10"/>
 
-                    <Label Text="Описание" Style="{StaticResource SubLabel}" />
+                    <Label Text="Описание" FontSize="12" FontAttributes="Bold" TextColor="#ccc"/>
                     <Entry Text="{Binding TransactionDescription}"
-                   Placeholder="Например: Продукты / Зарплата"/>
+                           Placeholder="Например: Продукты / Зарплата"
+                           BackgroundColor="#1e1f22"
+                           TextColor="White"
+                           PlaceholderColor="#666"
+                           CornerRadius="6"
+                           Padding="10"/>
 
-                    <Label Text="Кошелёк" Style="{StaticResource SubLabel}" />
+                    <Label Text="Кошелёк" FontSize="12" FontAttributes="Bold" TextColor="#ccc"/>
                     <Picker ItemsSource="{Binding Wallets}"
-                    ItemDisplayBinding="{Binding Name}"
-                    SelectedItem="{Binding SelectedWallet}" />
+                            ItemDisplayBinding="{Binding Name}"
+                            SelectedItem="{Binding SelectedWallet}"
+                            BackgroundColor="#1e1f22"
+                            TextColor="White"/>
 
-                    <Label Text="Категория" Style="{StaticResource SubLabel}" />
+                    <Label Text="Категория" FontSize="12" FontAttributes="Bold" TextColor="#ccc"/>
                     <Picker ItemsSource="{Binding Categories}"
-                    ItemDisplayBinding="{Binding Title}"
-                    SelectedItem="{Binding SelectedCategory}" />
+                            ItemDisplayBinding="{Binding Title}"
+                            SelectedItem="{Binding SelectedCategory}"
+                            BackgroundColor="#1e1f22"
+                            TextColor="White"/>
 
+                    <!-- Сообщение об ошибке -->
                     <Label Text="{Binding TransactionFormError}"
-                   TextColor="{StaticResource AccentOrange}"
-                   IsVisible="{Binding HasTransactionFormError}"
-                   FontSize="12"/>
+                           TextColor="#ff6b6b"
+                           IsVisible="{Binding HasTransactionFormError}"
+                           FontSize="12"
+                           Margin="0,5"/>
 
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,8,0,0">
-                        <Button Text="Отмена"
-                        Style="{StaticResource SecondaryButton}"
-                        Command="{Binding CancelTransactionCommand}" />
+                    <!-- Кнопки действий -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,12,0,0">
+                        <Button Grid.Column="0"
+                                Text="Отмена"
+                                Command="{Binding CancelTransactionCommand}"
+                                BackgroundColor="#555"
+                                TextColor="White"
+                                CornerRadius="6"/>
 
-                        <Button Text="Сохранить"
-                        Command="{Binding SaveTransactionCommand}" />
+                        <Button Grid.Column="1"
+                                Text="Сохранить"
+                                Command="{Binding SaveTransactionCommand}"
+                                BackgroundColor="#2ecc71"
+                                TextColor="White"
+                                CornerRadius="6"/>
                     </Grid>
 
                 </VerticalStackLayout>
             </Frame>
-        </Grid>
+        </AbsoluteLayout>
 
     </Grid>
 
 </ContentPage>
-
-
