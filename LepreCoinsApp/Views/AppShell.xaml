@@ -6,10 +6,29 @@
     xmlns:local="clr-namespace:LepreCoinsApp.Views">
 
     <TabBar>
-        <ShellContent Title="Главная" Icon="home.png" ContentTemplate="{DataTemplate local:MainPage}" Route="MainPage" />
-        <ShellContent Title="Бюджет" Icon="budget.png" ContentTemplate="{DataTemplate local:BudgetPage}" Route="BudgetPage" />
-        <ShellContent Title="Отчеты" Icon="history.png" ContentTemplate="{DataTemplate local:ReportsPage}" Route="ReportsPage" />
-        <ShellContent Title="Кошельки" Icon="report.png" ContentTemplate="{DataTemplate local:WalletsPage}" Route="WalletsPage" />
+        <ShellContent 
+            Title="Главная" 
+            Icon="home.png" 
+            ContentTemplate="{DataTemplate local:MainPage}" 
+            Route="main" />
+
+        <ShellContent 
+            Title="Бюджет" 
+            Icon="budget.png" 
+            ContentTemplate="{DataTemplate local:BudgetPage}" 
+            Route="budget" />
+
+        <ShellContent 
+            Title="Отчеты" 
+            Icon="history.png" 
+            ContentTemplate="{DataTemplate local:ReportsPage}" 
+            Route="reports" />
+
+        <ShellContent 
+            Title="Кошельки" 
+            Icon="report.png" 
+            ContentTemplate="{DataTemplate local:WalletsPage}" 
+            Route="wallets" />
     </TabBar>
 
 </Shell>

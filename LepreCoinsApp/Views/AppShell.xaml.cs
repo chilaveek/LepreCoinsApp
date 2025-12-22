@@ -7,10 +7,10 @@ public partial class AppShell : Shell
         InitializeComponent();
 
         // Регистрация маршрутов для навигации
-        Routing.RegisterRoute("add-expense", typeof(Views.MainPage));
-        Routing.RegisterRoute("add-income", typeof(Views.MainPage));
-        Routing.RegisterRoute("edit-transaction", typeof(Views.MainPage));
-        Routing.RegisterRoute("settings", typeof(Views.SettingsPage));
+        Routing.RegisterRoute("add-expense", typeof(MainPage));
+        Routing.RegisterRoute("add-income", typeof(MainPage));
+        Routing.RegisterRoute("edit-transaction", typeof(MainPage));
+        Routing.RegisterRoute("settings", typeof(SettingsPage));
     }
 
     /// <summary>

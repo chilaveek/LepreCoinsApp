@@ -56,6 +56,17 @@ namespace LepreCoinsApp
             builder.Services.AddTransient<BudgetViewModel>();
             builder.Services.AddTransient<BudgetPage>();
 
+            // Регистрация Views
+            builder.Services.AddSingleton<LoginPage>();
+            builder.Services.AddSingleton<RegisterPage>();
+
+            // Регистрация ViewModels
+            builder.Services.AddSingleton<LoginViewModel>();
+            builder.Services.AddSingleton<RegisterViewModel>();
+
+            builder.Services.AddSingleton<AuthenticationShell>();
+
+
             var app = builder.Build();
             _ = InitializeDatabaseAsync(app);
             return app;

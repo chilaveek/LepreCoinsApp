@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using Interfaces.DTO;
 using Interfaces.Service;
+using LC.BLL.Session;
 using LepreCoins.Models;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using System.Collections.ObjectModel;
@@ -47,7 +48,7 @@ namespace LepreCoinsApp.ViewModels
         public WalletsViewModel(IWalletService walletService,
     IAuthenticationService authService)
         {
-            _currentUserId = authService.GetCurrentUserId();
+            _currentUserId = Session.CurrentUser.Id;
             _walletService = walletService;  
             _authService = authService;        
             Title = "Кошельки";

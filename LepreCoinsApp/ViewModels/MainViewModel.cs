@@ -1,4 +1,5 @@
-﻿using ApplicationCore.Interfaces;
+﻿using LC.BLL.Session;
+using ApplicationCore.Interfaces;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Interfaces.DTO;
@@ -19,7 +20,7 @@ public partial class MainViewModel : BaseViewModel
     private readonly IWalletService _walletService;
     private readonly IReceiptScannerService _receiptScanner;
 
-    private int _currentUserId = 1;
+    private int _currentUserId = Session.CurrentUser.Id;
 
     [ObservableProperty]
     private ObservableCollection<TransactionDto> transactions = new();

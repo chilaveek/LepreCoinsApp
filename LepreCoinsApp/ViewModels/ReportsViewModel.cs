@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using LC.BLL.Session;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Interfaces;
 using Interfaces.DTO;
@@ -136,8 +137,7 @@ public partial class ReportsViewModel : BaseViewModel
             IsBusy = true;
             BusyText = "Генерация отчета...";
 
-            // Получаем ID пользователя из сервиса аутентификации
-            int userId = _authService.GetCurrentUserId();
+            int userId = Session.CurrentUser.Id;
 
             // Вызываем BLL для получения данных отчёта
             var result = await _reportService.GetReportDataAsync(userId, _currentDateRange);
@@ -211,7 +211,7 @@ public partial class ReportsViewModel : BaseViewModel
             IsBusy = true;
             BusyText = "Экспорт в PDF...";
 
-            int userId = _authService.GetCurrentUserId();
+            int userId = Session.CurrentUser.Id;
 
             // Вызываем сервис для генерации PDF
             var result = await _reportService.GeneratePdfReportAsync(userId, _currentDateRange);

@@ -8,11 +8,14 @@ namespace LepreCoinsApp
         {
             InitializeComponent();
             this.UserAppTheme = AppTheme.Dark;
+
         }
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            return new Window(new AppShell());
+            //var loginPage = new LoginPage(IPlatformApplication.Current.Services);
+            return new Window(new AuthenticationShell());
+
         }
     }
 }
