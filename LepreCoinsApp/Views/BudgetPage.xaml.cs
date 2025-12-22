@@ -26,10 +26,5 @@ public partial class BudgetPage : ContentPage
     protected override async void OnNavigatedTo(NavigatedToEventArgs args)
     {
         base.OnNavigatedTo(args);
-
-        if (BindingContext is BudgetViewModel viewModel)
-        {
-            await viewModel.RefreshStatisticsAsync();
-        }
     }
 }

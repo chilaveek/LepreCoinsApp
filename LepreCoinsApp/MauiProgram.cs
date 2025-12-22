@@ -42,7 +42,7 @@ namespace LepreCoinsApp
             builder.Services.AddScoped<IWalletService, WalletService>();
             builder.Services.AddScoped<INotificationService, NotificationService>();
             builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
-            builder.Services.AddSingleton<IBudgetService, BudgetService>();
+            builder.Services.AddScoped<IBudgetService, BudgetService>();
 
             // Регистрация ViewModels
             builder.Services.AddSingleton<MainPage>();
@@ -53,7 +53,7 @@ namespace LepreCoinsApp
             builder.Services.AddTransient<SettingsViewModel>();
             builder.Services.AddTransient<WalletsPage>();
             builder.Services.AddTransient<WalletsViewModel>();
-            builder.Services.AddSingleton<BudgetViewModel>();
+            builder.Services.AddTransient<BudgetViewModel>();
             builder.Services.AddTransient<BudgetPage>();
 
             var app = builder.Build();
