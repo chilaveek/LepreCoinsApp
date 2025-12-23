@@ -62,7 +62,6 @@ public class RegisterViewModel : ObservableObject
             await _authService.RegisterAsync(user, Password);
             Session.CurrentUser = user;
 
-            // Заменяем Shell на AppShell вместо навигации
             Application.Current.MainPage = new AppShell();
         }
         catch (Exception ex)

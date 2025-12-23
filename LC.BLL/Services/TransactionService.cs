@@ -45,7 +45,6 @@ public class TransactionService : ITransactionService
             wallet.Balance -= dto.Sum;
             await _unitOfWork.WalletRepository.UpdateAsync(wallet);
 
-            // Синхронизация с бюджетом
             await UpdateBudgetStatsAsync(dto.UserId, dto.CategoryId, dto.Sum);
 
             await _unitOfWork.SaveChangesAsync();
@@ -305,7 +304,6 @@ public class TransactionService : ITransactionService
         await _unitOfWork.BudgetRepository.UpdateAsync(budget);
     }
 
-    // ВАЖНО: TransactionDto теперь принимает WalletId
     private TransactionDto MapToDto(Expense e) => new TransactionDto(
         e.Id,
         e.Date?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Now,

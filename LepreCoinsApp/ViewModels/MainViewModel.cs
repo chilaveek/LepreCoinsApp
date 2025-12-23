@@ -120,8 +120,6 @@ public partial class MainViewModel : BaseViewModel
     private void OpenTransactionPopup(bool incomeMode)
     {
         IsIncomeMode = incomeMode;
-
-        // Если мы не в режиме редактирования, очищаем поля
         if (EditingTransaction == null)
         {
             TransactionPopupTitle = incomeMode ? "Добавить доход" : "Добавить расход";
@@ -158,7 +156,6 @@ public partial class MainViewModel : BaseViewModel
         TransactionAmountText = transaction.Amount.ToString(CultureInfo.InvariantCulture);
         TransactionDescription = transaction.Description;
 
-        // Теперь WalletId доступен напрямую!
         SelectedWallet = Wallets.FirstOrDefault(w => w.Id == transaction.WalletId);
 
         OpenTransactionPopup(transaction.Type == "Income");
@@ -230,7 +227,7 @@ public partial class MainViewModel : BaseViewModel
 
             if (res.IsSuccess)
             {
-                CancelTransaction(); // Закрывает и очищает
+                CancelTransaction();
                 await LoadDataAsync();
             }
             else

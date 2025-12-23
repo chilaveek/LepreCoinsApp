@@ -107,7 +107,6 @@ namespace LepreCoinsApp.ViewModels
         {
             WalletFormError = "";
 
-            // Валидация имени
             var name = (WalletNameText ?? "").Trim();
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -147,7 +146,6 @@ namespace LepreCoinsApp.ViewModels
                     return;
                 }
 
-                // Перезагрузить список кошельков
                 await LoadWalletsAsync();
                 IsAddWalletPopupVisible = false;
             }

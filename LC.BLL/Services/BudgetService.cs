@@ -95,7 +95,6 @@ public class BudgetService : IBudgetService
         }
         catch (Exception ex)
         {
-            // Здесь можно добавить логгирование ошибки
             Console.WriteLine($"Ошибка при получении бюджета: {ex.Message}");
             return null;
         }
@@ -104,25 +103,21 @@ public class BudgetService : IBudgetService
     {
         try
         {
-            // 1. Получаем пользователя, чтобы узнать его BudgetId
             var user = await _unitOfWork.UserRepository.GetByIdAsync(userId);
             if (user == null) return Result.Failure("Пользователь не найден");
 
             if (user.Budgetid == null)
                 return Result.Failure("У пользователя не настроен бюджет");
 
-            // 2. Получаем сам бюджет
             var budget = await _unitOfWork.BudgetRepository.GetByIdAsync(user.Budgetid.Value);
             if (budget == null)
                 return Result.Failure("Бюджет не найден в базе данных");
 
-            // 3. Обнуляем счетчики трат
             budget.CurrentExpenses = 0;
             budget.SpentNeeds = 0;
             budget.SpentWants = 0;
             budget.SpentSavings = 0;
 
-            // 4. Сохраняем изменения
             await _unitOfWork.BudgetRepository.UpdateAsync(budget);
             await _unitOfWork.SaveChangesAsync();
 

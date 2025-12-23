@@ -9,8 +9,6 @@ namespace LC.BLL.Services
 {
     public class ReceiptScannerService : IReceiptScannerService
     {
-        // В реальном приложении используйте API сервисы OCR (Google Vision, Azure Computer Vision и т.д.)
-        // Сейчас демонстрируем структуру с базовой обработкой текста
 
         public async Task<Result<ScannedReceiptDto>> ScanReceiptAsync(Stream imageStream)
         {
@@ -79,8 +77,8 @@ namespace LC.BLL.Services
 
                 var receipt = new ScannedReceiptDto(
                     DateTime.Now,
-                    "Магазин", // Извлечь из OCR результатов
-                    300.00m,    // Итоговая сумма
+                    "Магазин", 
+                    300.00m,   
                     items.Data ?? new List<ReceiptItem>(),
                     null);
 

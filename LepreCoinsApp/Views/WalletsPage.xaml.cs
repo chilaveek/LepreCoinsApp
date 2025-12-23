@@ -16,7 +16,6 @@ public partial class WalletsPage : ContentPage
     {
         base.OnAppearing();
 
-        // «агрузить кошельки при по€влении страницы
         await _viewModel.LoadWalletsCommand.ExecuteAsync(null);
     }
 }

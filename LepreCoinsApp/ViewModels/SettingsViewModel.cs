@@ -36,7 +36,6 @@ public partial class SettingsViewModel : BaseViewModel
             IsBusy = true;
             BusyText = "Загрузка настроек...";
 
-            // Загрузить настройки из Preferences
             LowBalanceThreshold = decimal.TryParse(
                 Preferences.Get("low_balance_threshold", "1000"),
                 out var threshold) ? threshold : 1000m;
@@ -93,8 +92,6 @@ public partial class SettingsViewModel : BaseViewModel
         {
             IsBusy = true;
             BusyText = "Проверка обновлений...";
-
-            // TODO: проверить обновления на сервере
 
             await Application.Current!.MainPage!.DisplayAlert(
                 "Информация",

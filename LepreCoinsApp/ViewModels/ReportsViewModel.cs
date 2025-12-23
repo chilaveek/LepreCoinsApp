@@ -26,8 +26,6 @@ public partial class ReportsViewModel : BaseViewModel
     [ObservableProperty] private string maxIncomeCategory = "—";
     [ObservableProperty] private decimal maxIncomeAmount;
     [ObservableProperty] private string selectedSortType = "Сначала новые";
-
-    // Оставляем только get, так как коллекция инициализируется один раз
     public ObservableCollection<TransactionDto> ReportTransactions { get; } = new();
 
     public ReportsViewModel(IReportService reportService)
@@ -61,10 +59,8 @@ public partial class ReportsViewModel : BaseViewModel
                 _allCurrentTransactions.Clear();
                 _allCurrentTransactions.AddRange(result.Data.Transactions);
 
-                // Поиск максимумов
                 UpdateHighlights();
 
-                // Применяем сортировку и заполняем ObservableCollection
                 ApplySort();
 
                 IsReportVisible = true;
@@ -104,7 +100,6 @@ public partial class ReportsViewModel : BaseViewModel
             _ => _allCurrentTransactions.OrderByDescending(t => t.Date)
         };
 
-        // Важно: работаем с коллекцией в основном потоке
         MainThread.BeginInvokeOnMainThread(() =>
         {
             ReportTransactions.Clear();

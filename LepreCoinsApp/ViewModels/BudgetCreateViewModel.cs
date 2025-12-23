@@ -32,7 +32,6 @@ public partial class BudgetCreateViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(SavingsMoney))]
     private int _savingsPercentage = 20;
 
-    // РАСЧЕТНЫЕ СВОЙСТВА (ДЕНЬГИ)
     public decimal NeedsMoney => EstablishedAmount * NeedsPercentage / 100;
     public decimal WantsMoney => EstablishedAmount * WantsPercentage / 100;
     public decimal SavingsMoney => EstablishedAmount * SavingsPercentage / 100;

@@ -68,8 +68,6 @@ public partial class BudgetViewModel : ObservableObject
         }
     }
 
-    // --- КОМАНДЫ ---
-
     [RelayCommand]
     public async Task LoadBudgetData()
     {
@@ -77,20 +75,15 @@ public partial class BudgetViewModel : ObservableObject
 
         if (budgetId != null && budgetId > 0)
         {
-            // 1. Получаем свежие данные из сервиса без кэша
             var budget = await _budgetService.GetBudgetByIdAsync(budgetId.Value);
 
             if (budget != null)
             {
-                // 2. Присваиваем новый объект. 
-                // Благодаря [NotifyPropertyChangedFor] в заголовке класса, 
-                // это автоматически дернет обновление NeedsProgress, TotalProgress и т.д.
                 CurrentBudget = budget;
 
                 HasBudget = true;
                 HasNoBudget = false;
 
-                // 3. На всякий случай принудительно уведомляем UI о пересчете
                 OnPropertyChanged(nameof(NeedsRemaining));
                 OnPropertyChanged(nameof(WantsRemaining));
                 OnPropertyChanged(nameof(SavingsRemaining));
@@ -123,12 +116,8 @@ public partial class BudgetViewModel : ObservableObject
 
         if (result.IsSuccess)
         {
-            // ВАЖНО: Сначала загружаем данные, потом выключаем IsBusy
             await LoadBudgetData();
             IsBusy = false;
-
-            // Короткое уведомление (по желанию)
-            // await Shell.Current.DisplayAlert("Успех", "Данные обновлены", "OK");
         }
         else
         {
@@ -142,9 +131,6 @@ public partial class BudgetViewModel : ObservableObject
     {
         await Shell.Current.GoToAsync("BudgetCreatePage");
     }
-
-
-    // --- ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ---
 
     private decimal CalculateRemaining(decimal? total, int? percent, decimal? spent)
     {

@@ -30,7 +30,6 @@ public class DatabaseInitializationService : IDatabaseInitializationService
         }
         catch (Exception ex)
         {
-            // Логируем критическую ошибку
             System.Diagnostics.Debug.WriteLine($"КРИТИЧЕСКАЯ ОШИБКА БД: {ex.Message}");
             if (ex.InnerException != null)
             {

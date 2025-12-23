@@ -127,8 +127,8 @@ namespace LC.BLL.Services
                         "Расход",
                         e.Description ?? "",
                         "Expense",
-                        e.Walletid ?? 0,      // АРГУМЕНТ 7: WalletId
-                        "Кошелек"             // АРГУМЕНТ 8: WalletName (заглушка или имя из БД)
+                        e.Walletid ?? 0,      
+                        "Кошелек"             
                     ));
                 }
 
@@ -143,8 +143,8 @@ namespace LC.BLL.Services
                         "Доход",
                         i.Description ?? "",
                         "Income",
-                        i.Walletid ?? 0,      // АРГУМЕНТ 7: WalletId
-                        "Кошелек"             // АРГУМЕНТ 8: WalletName
+                        i.Walletid ?? 0,   
+                        "Кошелек"             
                     ));
                 }
 
