@@ -1,188 +1,110 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:LepreCoinsApp.ViewModels"
+             xmlns:models="clr-namespace:Interfaces.DTO;assembly=Interfaces"
+             xmlns:converters="clr-namespace:LepreCoinsApp.Converters"
              x:Class="LepreCoinsApp.Views.MainPage"
-             Title="LepreCoins - Семейный Бюджет"
              BackgroundColor="#0F1419">
 
-    <Grid RowDefinitions="Auto,*" ColumnDefinitions="*" Padding="20">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:TransactionTypeColorConverter x:Key="TransactionTypeColorConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
 
-        <!-- Заголовок -->
-        <StackLayout Grid.Row="0" Spacing="10">
-            <Label Text="Семейный Бюджет" FontSize="28" FontAttributes="Bold" TextColor="White"/>
-            <Label Text="Управляйте бюджетом семьи эффективно" FontSize="14" TextColor="#ccc"/>
-        </StackLayout>
+    <Grid RowDefinitions="*">
+        <CollectionView ItemsSource="{Binding Transactions}" SelectionMode="None">
+            <CollectionView.Header>
+                <VerticalStackLayout Spacing="20" Padding="20">
+                    <Label Text="Мои Финансы" FontSize="28" FontAttributes="Bold" TextColor="White"/>
 
-        <!-- Основное содержимое -->
-        <ScrollView Grid.Row="1">
-            <VerticalStackLayout Spacing="15" Padding="0,20,0,0">
-
-                <!-- Карточка общего баланса -->
-                <Frame BorderColor="#ddd" CornerRadius="10" Padding="20" HasShadow="True" BackgroundColor="#1a1d21">
-                    <VerticalStackLayout Spacing="10">
-                        <Label Text="Общий Баланс" FontSize="14" TextColor="#999"/>
-                        <Label Text="{Binding TotalBalance, StringFormat='{0:C}'}" 
-                               FontSize="32" FontAttributes="Bold" TextColor="#2ecc71"/>
-                    </VerticalStackLayout>
-                </Frame>
-
-                <!-- Статистика -->
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                    <Frame Grid.Column="0" BorderColor="#ddd" CornerRadius="10" Padding="15" HasShadow="True" BackgroundColor="#1a1d21">
+                    <Frame BackgroundColor="#1a1d21" BorderColor="#333" CornerRadius="15" Padding="20">
                         <VerticalStackLayout Spacing="5">
-                            <Label Text="Доходы" FontSize="12" TextColor="#999"/>
-                            <Label Text="{Binding MonthlyIncome, StringFormat='{0:C}'}" 
-                                   FontSize="18" FontAttributes="Bold" TextColor="#3498db"/>
+                            <Label Text="ОБЩИЙ БАЛАНС" FontSize="12" TextColor="#777" CharacterSpacing="2"/>
+                            <Label Text="{Binding TotalBalance, StringFormat='{0:N0} ₽'}" 
+                                   FontSize="36" FontAttributes="Bold" TextColor="#2ecc71"/>
                         </VerticalStackLayout>
                     </Frame>
 
-                    <Frame Grid.Column="1" BorderColor="#ddd" CornerRadius="10" Padding="15" HasShadow="True" BackgroundColor="#1a1d21">
-                        <VerticalStackLayout Spacing="5">
-                            <Label Text="Расходы" FontSize="12" TextColor="#999"/>
-                            <Label Text="{Binding MonthlyExpenses, StringFormat='{0:C}'}" 
-                                   FontSize="18" FontAttributes="Bold" TextColor="#e74c3c"/>
-                        </VerticalStackLayout>
-                    </Frame>
-                </Grid>
-
-                <!-- Действия -->
-                <Label Text="Быстрые действия" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0" TextColor="White"/>
-
-                <Button Text="+ Добавить расход" 
-                        Command="{Binding AddExpenseCommand}"
-                        BackgroundColor="#e74c3c" 
-                        TextColor="White" 
-                        CornerRadius="8"/>
-
-                <Button Text="+ Добавить доход" 
-                        Command="{Binding AddIncomeCommand}"
-                        BackgroundColor="#2ecc71" 
-                        TextColor="White" 
-                        CornerRadius="8"/>
-
-                <Button Text="📷 Сканировать чек"
-                        Command="{Binding ScanReceiptCommand}"
-                        BackgroundColor="#f39c12"
-                        TextColor="White"
-                        CornerRadius="8"/>
-
-                <!-- Последние транзакции -->
-                <Label Text="Последние транзакции" FontSize="16" FontAttributes="Bold" Margin="0,10,0,0" TextColor="White"/>
-
-                <CollectionView ItemsSource="{Binding Transactions}" SelectionMode="Single">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <Frame CornerRadius="8" Padding="15" Margin="0,5" BackgroundColor="#1a1d21" BorderColor="#333">
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="15">
-                                    <VerticalStackLayout Grid.Column="0" Spacing="3">
-                                        <Label Text="{Binding Description}" FontSize="14" FontAttributes="Bold" TextColor="White"/>
-                                        <Label Text="{Binding Date, StringFormat='{0:dd.MM.yyyy HH:mm}'}" 
-                                               FontSize="12" TextColor="#999"/>
-                                    </VerticalStackLayout>
-                                    <Label Grid.Column="1" 
-                                           Text="{Binding Amount, StringFormat='{0:C}'}" 
-                                           FontSize="14" 
-                                           FontAttributes="Bold"
-                                           TextColor="{Binding Type, Converter={StaticResource TransactionTypeColorConverter}}"/>
-                                </Grid>
-                            </Frame>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-
-            </VerticalStackLayout>
-        </ScrollView>
-
-        <!-- POPUP OVERLAY -->
-        <AbsoluteLayout Grid.Row="0" Grid.RowSpan="2" IsVisible="{Binding IsTransactionPopupVisible}" 
-                        ZIndex="100"
-                        BackgroundColor="Transparent"
-                        InputTransparent="False">
-
-            <!-- Полупрозрачный фон -->
-            <BoxView Color="#80000000" 
-                     AbsoluteLayout.LayoutBounds="0,0,1,1" 
-                     AbsoluteLayout.LayoutFlags="All"/>
-
-            <!-- Модальное окно -->
-            <Frame BackgroundColor="#2a2d31"
-                   CornerRadius="18"
-                   Padding="18"
-                   WidthRequest="500"
-                   HasShadow="True"
-                   BorderColor="#444"
-                   AbsoluteLayout.LayoutBounds="0.5,0.5,-1,-1"
-                   AbsoluteLayout.LayoutFlags="PositionProportional">
-
-                <VerticalStackLayout Spacing="12">
-
-                    <Label Text="{Binding TransactionPopupTitle}"
-                           FontSize="20"
-                           FontAttributes="Bold"
-                           TextColor="White"
-                           Margin="0,0,0,6"/>
-
-                    <Label Text="Сумма" FontSize="12" FontAttributes="Bold" TextColor="#ccc"/>
-                    <Entry Text="{Binding TransactionAmountText}"
-                           Keyboard="Numeric"
-                           Placeholder="Например: 1500.00"
-                           BackgroundColor="#1e1f22"
-                           TextColor="White"
-                           PlaceholderColor="#666"
-                           CornerRadius="6"
-                           Padding="10"/>
-
-                    <Label Text="Описание" FontSize="12" FontAttributes="Bold" TextColor="#ccc"/>
-                    <Entry Text="{Binding TransactionDescription}"
-                           Placeholder="Например: Продукты / Зарплата"
-                           BackgroundColor="#1e1f22"
-                           TextColor="White"
-                           PlaceholderColor="#666"
-                           CornerRadius="6"
-                           Padding="10"/>
-
-                    <Label Text="Кошелёк" FontSize="12" FontAttributes="Bold" TextColor="#ccc"/>
-                    <Picker ItemsSource="{Binding Wallets}"
-                            ItemDisplayBinding="{Binding Name}"
-                            SelectedItem="{Binding SelectedWallet}"
-                            BackgroundColor="#1e1f22"
-                            TextColor="White"/>
-
-                    <Label Text="Категория" FontSize="12" FontAttributes="Bold" TextColor="#ccc"/>
-                    <Picker ItemsSource="{Binding Categories}"
-                            ItemDisplayBinding="{Binding Title}"
-                            SelectedItem="{Binding SelectedCategory}"
-                            BackgroundColor="#1e1f22"
-                            TextColor="White"/>
-
-                    <!-- Сообщение об ошибке -->
-                    <Label Text="{Binding TransactionFormError}"
-                           TextColor="#ff6b6b"
-                           IsVisible="{Binding HasTransactionFormError}"
-                           FontSize="12"
-                           Margin="0,5"/>
-
-                    <!-- Кнопки действий -->
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,12,0,0">
-                        <Button Grid.Column="0"
-                                Text="Отмена"
-                                Command="{Binding CancelTransactionCommand}"
-                                BackgroundColor="#555"
-                                TextColor="White"
-                                CornerRadius="6"/>
-
-                        <Button Grid.Column="1"
-                                Text="Сохранить"
-                                Command="{Binding SaveTransactionCommand}"
-                                BackgroundColor="#2ecc71"
-                                TextColor="White"
-                                CornerRadius="6"/>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="15">
+                        <Button Grid.Column="0" Text="+ Доход" Command="{Binding AddIncomeCommand}" 
+                                BackgroundColor="#2ecc71" HeightRequest="50" CornerRadius="10"/>
+                        <Button Grid.Column="1" Text="- Расход" Command="{Binding AddExpenseCommand}" 
+                                BackgroundColor="#e74c3c" HeightRequest="50" CornerRadius="10"/>
                     </Grid>
 
+                    <Label Text="ИСТОРИЯ ОПЕРАЦИЙ" FontSize="12" TextColor="#777" Margin="0,10,0,0"/>
+                </VerticalStackLayout>
+            </CollectionView.Header>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:TransactionDto">
+                    <Grid Padding="20,5">
+                        <Frame BackgroundColor="#1a1d21" BorderColor="#333" Padding="15" CornerRadius="12">
+                            <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="10">
+
+                                <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
+                                    <Label Text="{Binding Description}" FontSize="16" FontAttributes="Bold" TextColor="White"/>
+                                    <Label Text="{Binding Date, StringFormat='{0:dd.MM.yyyy}'}" FontSize="12" TextColor="#555"/>
+                                </VerticalStackLayout>
+
+                                <Label Grid.Column="1" VerticalOptions="Center" Margin="0,0,10,0"
+                                       Text="{Binding Amount, StringFormat='{0:N0} ₽'}" 
+                                       TextColor="{Binding Type, Converter={StaticResource TransactionTypeColorConverter}}"
+                                       FontAttributes="Bold" FontSize="16"/>
+
+                                <HorizontalStackLayout Grid.Column="2" Spacing="5">
+                                    <ImageButton Source="edit_icon.png" 
+                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=EditTransactionCommand}"
+                                                 CommandParameter="{Binding .}"
+                                                 HeightRequest="35" WidthRequest="35"
+                                                 BackgroundColor="#2c313a" CornerRadius="5" Padding="8"/>
+
+                                    <ImageButton Source="delete_icon.png" 
+                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=DeleteTransactionCommand}"
+                                                 CommandParameter="{Binding .}"
+                                                 HeightRequest="35" WidthRequest="35"
+                                                 BackgroundColor="#3a2c2c" CornerRadius="5" Padding="8"/>
+                                </HorizontalStackLayout>
+                            </Grid>
+                        </Frame>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+
+            <CollectionView.Footer>
+                <BoxView HeightRequest="20" Color="Transparent"/>
+            </CollectionView.Footer>
+        </CollectionView>
+
+        <Grid IsVisible="{Binding IsTransactionPopupVisible}" BackgroundColor="#CC000000">
+            <Frame BackgroundColor="#2a2d31" CornerRadius="20" Margin="30" VerticalOptions="Center" BorderColor="#444">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="{Binding TransactionPopupTitle}" FontSize="22" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White"/>
+
+                    <Entry Placeholder="Сумма" Text="{Binding TransactionAmountText}" Keyboard="Numeric" 
+                           BackgroundColor="#1e1f22" TextColor="White" HeightRequest="50"/>
+
+                    <Entry Placeholder="Описание" Text="{Binding TransactionDescription}" 
+                           BackgroundColor="#1e1f22" TextColor="White" HeightRequest="50"/>
+
+                    <Picker Title="Кошелек" ItemsSource="{Binding Wallets}" ItemDisplayBinding="{Binding Name}" 
+                            SelectedItem="{Binding SelectedWallet}" TextColor="White" TitleColor="#777"/>
+
+                    <Picker Title="Категория" ItemsSource="{Binding Categories}" ItemDisplayBinding="{Binding Title}" 
+                            SelectedItem="{Binding SelectedCategory}" TextColor="White" TitleColor="#777"/>
+
+                    <Label Text="{Binding TransactionFormError}" TextColor="#e74c3c" IsVisible="{Binding HasTransactionFormError}" HorizontalOptions="Center"/>
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="15">
+                        <Button Grid.Column="0" Text="Отмена" Command="{Binding CancelTransactionCommand}" BackgroundColor="#444"/>
+                        <Button Grid.Column="1" Text="Готово" Command="{Binding SaveTransactionCommand}" BackgroundColor="#2ecc71"/>
+                    </Grid>
                 </VerticalStackLayout>
             </Frame>
-        </AbsoluteLayout>
+        </Grid>
 
+        <ActivityIndicator IsRunning="{Binding IsBusy}" Color="#2ecc71" VerticalOptions="Center" HorizontalOptions="Center"/>
     </Grid>
-
 </ContentPage>

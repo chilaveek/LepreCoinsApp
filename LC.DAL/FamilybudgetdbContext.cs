@@ -36,14 +36,24 @@ public partial class FamilybudgetdbContext : DbContext
 
             entity.Property(e => e.CurrentExpenses)
                 .HasPrecision(19);
-            entity.Property(e => e.EstablishedAmount)
-                .HasPrecision(19);
+
+            entity.Property(e => e.SpentNeeds)
+                .HasDefaultValue(0m);
+
+            entity.Property(e => e.SpentWants)
+                .HasDefaultValue(0m);
+
+            entity.Property(e => e.SpentSavings)
+                .HasDefaultValue(0m);
+
             entity.Property(e => e.NeedsPercentage)
                 .IsRequired()
                 .HasDefaultValue(50);
+
             entity.Property(e => e.WantsPercentage)
                 .IsRequired()
                 .HasDefaultValue(30);
+
             entity.Property(e => e.SavingsPercentage)
                 .IsRequired()
                 .HasDefaultValue(20);

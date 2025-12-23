@@ -4,6 +4,10 @@ using Interfaces.DTO;
 using ApplicationCore.Interfaces;
 using Interfaces;
 using LepreCoins.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 public class TransactionService : ITransactionService
 {
@@ -14,13 +18,14 @@ public class TransactionService : ITransactionService
         _unitOfWork = unitOfWork;
     }
 
+    #region Create Methods
+
     public async Task<Result<TransactionDto>> AddExpenseAsync(CreateExpenseDto dto)
     {
         try
         {
             var wallet = await _unitOfWork.WalletRepository.GetByIdAsync(dto.WalletId);
-            if (wallet == null)
-                return Result<TransactionDto>.Failure("Кошелек не найден");
+            if (wallet == null) return Result<TransactionDto>.Failure("Кошелек не найден");
 
             if (wallet.Balance < dto.Sum)
                 return Result<TransactionDto>.Failure("Недостаточно средств");
@@ -40,17 +45,12 @@ public class TransactionService : ITransactionService
             wallet.Balance -= dto.Sum;
             await _unitOfWork.WalletRepository.UpdateAsync(wallet);
 
+            // Синхронизация с бюджетом
+            await UpdateBudgetStatsAsync(dto.UserId, dto.CategoryId, dto.Sum);
+
             await _unitOfWork.SaveChangesAsync();
 
-            var transactionDto = new TransactionDto(
-                expense.Id,
-                expense.Date?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Now,
-                expense.Sum ?? 0,
-                "Расход",
-                expense.Description ?? "",
-                "Expense");
-
-            return Result<TransactionDto>.Success(transactionDto);
+            return Result<TransactionDto>.Success(MapToDto(expense));
         }
         catch (Exception ex)
         {
@@ -63,8 +63,7 @@ public class TransactionService : ITransactionService
         try
         {
             var wallet = await _unitOfWork.WalletRepository.GetByIdAsync(dto.WalletId);
-            if (wallet == null)
-                return Result<TransactionDto>.Failure("Кошелек не найден");
+            if (wallet == null) return Result<TransactionDto>.Failure("Кошелек не найден");
 
             var income = new Income
             {
@@ -83,20 +82,37 @@ public class TransactionService : ITransactionService
 
             await _unitOfWork.SaveChangesAsync();
 
-            var transactionDto = new TransactionDto(
-                income.Id,
-                income.Date?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Now,
-                income.Sum ?? 0,
-                "Доход",
-                income.Description ?? "",
-                "Income");
-
-            return Result<TransactionDto>.Success(transactionDto);
+            return Result<TransactionDto>.Success(MapToDto(income));
         }
         catch (Exception ex)
         {
-            return Result<TransactionDto>.Failure($"Ошибка при добавлении дохода: {ex.Message} {ex.InnerException}");
+            return Result<TransactionDto>.Failure($"Ошибка при добавлении дохода: {ex.Message}");
         }
+    }
+
+    #endregion
+
+    #region Update Methods
+
+    public async Task<Result> UpdateTransactionAsync(int id, decimal amount, string description, int categoryId, int walletId)
+    {
+        // Сначала проверяем расходы
+        var expense = await _unitOfWork.ExpenseRepository.GetByIdAsync(id);
+        if (expense != null)
+        {
+            // Используем позиционный конструктор record UpdateExpenseDto(decimal Sum, string Description, int CategoryId)
+            return await UpdateExpenseAsync(id, new UpdateExpenseDto(amount, description, categoryId));
+        }
+
+        // Если не расход, проверяем доходы
+        var income = await _unitOfWork.IncomeRepository.GetByIdAsync(id);
+        if (income != null)
+        {
+            // Используем позиционный конструктор record UpdateIncomeDto(decimal Sum, string Description, int IncomeCategoryId)
+            return await UpdateIncomeAsync(id, new UpdateIncomeDto(amount, description, categoryId));
+        }
+
+        return Result.Failure("Транзакция для обновления не найдена");
     }
 
     public async Task<Result<TransactionDto>> UpdateExpenseAsync(int id, UpdateExpenseDto dto)
@@ -104,41 +120,39 @@ public class TransactionService : ITransactionService
         try
         {
             var expense = await _unitOfWork.ExpenseRepository.GetByIdAsync(id);
-            if (expense == null)
-                return Result<TransactionDto>.Failure("Расход не найден");
+            if (expense == null) return Result<TransactionDto>.Failure("Расход не найден");
 
             var wallet = await _unitOfWork.WalletRepository.GetByIdAsync(expense.Walletid ?? 0);
-            if (wallet == null)
-                return Result<TransactionDto>.Failure("Кошелек не найден");
+            if (wallet == null) return Result<TransactionDto>.Failure("Кошелек не найден");
 
-            var oldSum = expense.Sum ?? 0;
+            decimal oldSum = expense.Sum ?? 0;
+            int oldCategoryId = expense.Categoryid ?? 0;
             decimal difference = dto.Sum - oldSum;
 
             if (wallet.Balance < difference)
-                return Result<TransactionDto>.Failure("Недостаточно средств");
+                return Result<TransactionDto>.Failure("Недостаточно средств на кошельке");
 
+            // Обновляем кошелек
+            wallet.Balance -= difference;
+
+            // Обновляем бюджет (откат старой суммы + применение новой)
+            await UpdateBudgetStatsAsync(expense.Userid ?? 0, oldCategoryId, -oldSum);
+            await UpdateBudgetStatsAsync(expense.Userid ?? 0, dto.CategoryId, dto.Sum);
+
+            // Обновляем поля сущности
             expense.Sum = dto.Sum;
             expense.Description = dto.Description;
             expense.Categoryid = dto.CategoryId;
 
-            wallet.Balance -= difference;
             await _unitOfWork.WalletRepository.UpdateAsync(wallet);
             await _unitOfWork.ExpenseRepository.UpdateAsync(expense);
             await _unitOfWork.SaveChangesAsync();
 
-            var transactionDto = new TransactionDto(
-                expense.Id,
-                expense.Date?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Now,
-                expense.Sum ?? 0,
-                "Расход",
-                expense.Description ?? "",
-                "Expense");
-
-            return Result<TransactionDto>.Success(transactionDto);
+            return Result<TransactionDto>.Success(MapToDto(expense));
         }
         catch (Exception ex)
         {
-            return Result<TransactionDto>.Failure($"Ошибка при обновлении расхода: {ex.Message}");
+            return Result<TransactionDto>.Failure($"Ошибка при обновлении: {ex.Message}");
         }
     }
 
@@ -147,14 +161,12 @@ public class TransactionService : ITransactionService
         try
         {
             var income = await _unitOfWork.IncomeRepository.GetByIdAsync(id);
-            if (income == null)
-                return Result<TransactionDto>.Failure("Доход не найден");
+            if (income == null) return Result<TransactionDto>.Failure("Доход не найден");
 
             var wallet = await _unitOfWork.WalletRepository.GetByIdAsync(income.Walletid ?? 0);
-            if (wallet == null)
-                return Result<TransactionDto>.Failure("Кошелек не найден");
+            if (wallet == null) return Result<TransactionDto>.Failure("Кошелек не найден");
 
-            var oldSum = income.Sum ?? 0;
+            decimal oldSum = income.Sum ?? 0;
             decimal difference = dto.Sum - oldSum;
 
             income.Sum = dto.Sum;
@@ -162,19 +174,12 @@ public class TransactionService : ITransactionService
             income.Incomecategoryid = dto.IncomeCategoryId;
 
             wallet.Balance += difference;
+
             await _unitOfWork.WalletRepository.UpdateAsync(wallet);
             await _unitOfWork.IncomeRepository.UpdateAsync(income);
             await _unitOfWork.SaveChangesAsync();
 
-            var transactionDto = new TransactionDto(
-                income.Id,
-                income.Date?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Now,
-                income.Sum ?? 0,
-                "Доход",
-                income.Description ?? "",
-                "Income");
-
-            return Result<TransactionDto>.Success(transactionDto);
+            return Result<TransactionDto>.Success(MapToDto(income));
         }
         catch (Exception ex)
         {
@@ -182,50 +187,19 @@ public class TransactionService : ITransactionService
         }
     }
 
-    public async Task<Result<IEnumerable<TransactionDto>>> GetUserTransactionsAsync(int userId, DateRange dateRange)
+    #endregion
+
+    #region Delete Methods
+
+    public async Task<Result> DeleteTransactionAsync(int id)
     {
-        try
-        {
-            var expenses = await _unitOfWork.ExpenseRepository.FindAsync(e =>
-                e.Userid == userId &&
-                e.Date >= DateOnly.FromDateTime(dateRange.StartDate) &&
-                e.Date <= DateOnly.FromDateTime(dateRange.EndDate));
+        var expense = await _unitOfWork.ExpenseRepository.GetByIdAsync(id);
+        if (expense != null) return await DeleteExpenseAsync(id);
 
-            var incomes = await _unitOfWork.IncomeRepository.FindAsync(i =>
-                i.Userid == userId &&
-                i.Date >= DateOnly.FromDateTime(dateRange.StartDate) &&
-                i.Date <= DateOnly.FromDateTime(dateRange.EndDate));
+        var income = await _unitOfWork.IncomeRepository.GetByIdAsync(id);
+        if (income != null) return await DeleteIncomeAsync(id);
 
-            var transactions = new List<TransactionDto>();
-
-            foreach (var expense in expenses)
-            {
-                transactions.Add(new TransactionDto(
-                    expense.Id,
-                    expense.Date?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Now,
-                    expense.Sum ?? 0,
-                    "Расход",
-                    expense.Description ?? "",
-                    "Expense"));
-            }
-
-            foreach (var income in incomes)
-            {
-                transactions.Add(new TransactionDto(
-                    income.Id,
-                    income.Date?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Now,
-                    income.Sum ?? 0,
-                    "Доход",
-                    income.Description ?? "",
-                    "Income"));
-            }
-
-            return Result<IEnumerable<TransactionDto>>.Success(transactions.OrderByDescending(t => t.Date));
-        }
-        catch (Exception ex)
-        {
-            return Result<IEnumerable<TransactionDto>>.Failure($"Ошибка при получении транзакций: {ex.Message}");
-        }
+        return Result.Failure("Транзакция не найдена");
     }
 
     public async Task<Result> DeleteExpenseAsync(int id)
@@ -233,8 +207,7 @@ public class TransactionService : ITransactionService
         try
         {
             var expense = await _unitOfWork.ExpenseRepository.GetByIdAsync(id);
-            if (expense == null)
-                return Result.Failure("Расход не найден");
+            if (expense == null) return Result.Failure("Расход не найден");
 
             var wallet = await _unitOfWork.WalletRepository.GetByIdAsync(expense.Walletid ?? 0);
             if (wallet != null)
@@ -243,6 +216,9 @@ public class TransactionService : ITransactionService
                 await _unitOfWork.WalletRepository.UpdateAsync(wallet);
             }
 
+            // Откат бюджета
+            await UpdateBudgetStatsAsync(expense.Userid ?? 0, expense.Categoryid ?? 0, -(expense.Sum ?? 0));
+
             await _unitOfWork.ExpenseRepository.DeleteAsync(expense);
             await _unitOfWork.SaveChangesAsync();
 
@@ -250,7 +226,7 @@ public class TransactionService : ITransactionService
         }
         catch (Exception ex)
         {
-            return Result.Failure($"Ошибка при удалении расхода: {ex.Message}");
+            return Result.Failure($"Ошибка при удалении: {ex.Message}");
         }
     }
 
@@ -259,8 +235,7 @@ public class TransactionService : ITransactionService
         try
         {
             var income = await _unitOfWork.IncomeRepository.GetByIdAsync(id);
-            if (income == null)
-                return Result.Failure("Доход не найден");
+            if (income == null) return Result.Failure("Доход не найден");
 
             var wallet = await _unitOfWork.WalletRepository.GetByIdAsync(income.Walletid ?? 0);
             if (wallet != null)
@@ -279,4 +254,77 @@ public class TransactionService : ITransactionService
             return Result.Failure($"Ошибка при удалении дохода: {ex.Message}");
         }
     }
+
+    #endregion
+
+    public async Task<Result<IEnumerable<TransactionDto>>> GetUserTransactionsAsync(int userId, DateRange dateRange)
+    {
+        try
+        {
+            var expenses = await _unitOfWork.ExpenseRepository.FindAsync(e =>
+                e.Userid == userId &&
+                e.Date >= DateOnly.FromDateTime(dateRange.StartDate) &&
+                e.Date <= DateOnly.FromDateTime(dateRange.EndDate));
+
+            var incomes = await _unitOfWork.IncomeRepository.FindAsync(i =>
+                i.Userid == userId &&
+                i.Date >= DateOnly.FromDateTime(dateRange.StartDate) &&
+                i.Date <= DateOnly.FromDateTime(dateRange.EndDate));
+
+            var transactions = expenses.Select(MapToDto)
+                .Concat(incomes.Select(MapToDto))
+                .OrderByDescending(t => t.Date);
+
+            return Result<IEnumerable<TransactionDto>>.Success(transactions);
+        }
+        catch (Exception ex)
+        {
+            return Result<IEnumerable<TransactionDto>>.Failure($"Ошибка загрузки: {ex.Message}");
+        }
+    }
+
+    #region Private Helpers
+
+    private async Task UpdateBudgetStatsAsync(int userId, int categoryId, decimal amount)
+    {
+        var user = await _unitOfWork.UserRepository.GetByIdAsync(userId);
+        if (user?.Budgetid == null) return;
+
+        var budget = await _unitOfWork.BudgetRepository.GetByIdAsync(user.Budgetid.Value);
+        if (budget == null) return;
+
+        budget.CurrentExpenses = (budget.CurrentExpenses ?? 0m) + amount;
+
+        switch (categoryId)
+        {
+            case 1: budget.SpentNeeds = (budget.SpentNeeds ?? 0m) + amount; break;
+            case 2: budget.SpentWants = (budget.SpentWants ?? 0m) + amount; break;
+            case 3: budget.SpentSavings = (budget.SpentSavings ?? 0m) + amount; break;
+        }
+
+        await _unitOfWork.BudgetRepository.UpdateAsync(budget);
+    }
+
+    // ВАЖНО: TransactionDto теперь принимает WalletId
+    private TransactionDto MapToDto(Expense e) => new TransactionDto(
+        e.Id,
+        e.Date?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Now,
+        e.Sum ?? 0,
+        "Расход",
+        e.Description ?? "",
+        "Expense",
+        e.Walletid ?? 0,
+        "Кошелек");
+
+    private TransactionDto MapToDto(Income i) => new TransactionDto(
+        i.Id,
+        i.Date?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Now,
+        i.Sum ?? 0,
+        "Доход",
+        i.Description ?? "",
+        "Income",
+        i.Walletid ?? 0,
+        "Кошелек");
+
+    #endregion
 }

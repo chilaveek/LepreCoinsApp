@@ -126,7 +126,10 @@ namespace LC.BLL.Services
                         amount,
                         "Расход",
                         e.Description ?? "",
-                        "Expense"));
+                        "Expense",
+                        e.Walletid ?? 0,      // АРГУМЕНТ 7: WalletId
+                        "Кошелек"             // АРГУМЕНТ 8: WalletName (заглушка или имя из БД)
+                    ));
                 }
 
                 foreach (var i in incomes)
@@ -139,7 +142,10 @@ namespace LC.BLL.Services
                         amount,
                         "Доход",
                         i.Description ?? "",
-                        "Income"));
+                        "Income",
+                        i.Walletid ?? 0,      // АРГУМЕНТ 7: WalletId
+                        "Кошелек"             // АРГУМЕНТ 8: WalletName
+                    ));
                 }
 
                 var report = new ReportDataDto(

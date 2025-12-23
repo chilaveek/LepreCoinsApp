@@ -1,4 +1,5 @@
-﻿namespace LepreCoinsApp.Views;
+﻿using LepreCoinsApp.ViewModels;
+namespace LepreCoinsApp.Views;
 
 public partial class BudgetPage : ContentPage
 {

@@ -7,7 +7,7 @@
 
     <ScrollView>
         <VerticalStackLayout Spacing="15" Padding="20">
-            <Label Text="📊 Аналитика бюджета" FontSize="26" FontAttributes="Bold" TextColor="White" Margin="0,0,0,10"/>
+            <Label Text="Аналитика бюджета" FontSize="26" FontAttributes="Bold" TextColor="White" Margin="0,0,0,10"/>
 
             <Frame BackgroundColor="#1a1f26" CornerRadius="12" BorderColor="#222" Padding="15">
                 <VerticalStackLayout Spacing="15">

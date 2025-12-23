@@ -2,31 +2,32 @@
 using Interfaces.DTO;
 using Interfaces.Service;
 using LC.BLL.Session;
+using LepreCoins.Infrastructure.LC.DAL;
 using LepreCoins.Models;
-
+using Interfaces;
 namespace LC.BLL.Services;
 
 public class BudgetService : IBudgetService
 {
-    private readonly IUnitOfWork _context;
+    private readonly IUnitOfWork _unitOfWork;
 
     public BudgetService(IUnitOfWork context)
     {
-        _context = context;
+        _unitOfWork = context;
     }
 
     public async Task<bool> CreateBudgetAsync(CreateBudgetDto dto)
     {
         try
         {
-            var user = await _context.UserRepository.GetByIdAsync(dto.UserId);
+            var user = await _unitOfWork.UserRepository.GetByIdAsync(dto.UserId);
             if (user == null) return false;
 
             Budget budgetEntity;
 
             if (user.Budgetid.HasValue && user.Budgetid > 0)
             {
-                budgetEntity = await _context.BudgetRepository.GetByIdAsync(user.Budgetid.Value);
+                budgetEntity = await _unitOfWork.BudgetRepository.GetByIdAsync(user.Budgetid.Value);
 
                 if (budgetEntity != null)
                 {
@@ -37,26 +38,26 @@ public class BudgetService : IBudgetService
                     budgetEntity.WantsPercentage = dto.Wants;
                     budgetEntity.SavingsPercentage = dto.Savings;
 
-                    await _context.BudgetRepository.UpdateAsync(budgetEntity);
+                    await _unitOfWork.BudgetRepository.UpdateAsync(budgetEntity);
                 }
                 else
                 {
                     budgetEntity = CreateNewBudgetEntity(dto);
-                    await _context.BudgetRepository.AddAsync(budgetEntity);
+                    await _unitOfWork.BudgetRepository.AddAsync(budgetEntity);
                 }
             }
             else
             {
                 budgetEntity = CreateNewBudgetEntity(dto);
-                await _context.BudgetRepository.AddAsync(budgetEntity);
+                await _unitOfWork.BudgetRepository.AddAsync(budgetEntity);
             }
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             if (user.Budgetid != budgetEntity.Id)
             {
                 user.Budgetid = budgetEntity.Id;
-                await _context.SaveChangesAsync();
+                await _unitOfWork.SaveChangesAsync();
 
                 if (Session.Session.CurrentUser != null)
                 {
@@ -89,7 +90,7 @@ public class BudgetService : IBudgetService
     {
         try
         {
-            var budget = await _context.BudgetRepository.GetByIdAsync(id);
+            var budget = await _unitOfWork.BudgetRepository.GetByIdAsync(id);
             return budget;
         }
         catch (Exception ex)
@@ -97,6 +98,39 @@ public class BudgetService : IBudgetService
             // Здесь можно добавить логгирование ошибки
             Console.WriteLine($"Ошибка при получении бюджета: {ex.Message}");
             return null;
+        }
+    }
+    public async Task<Result> ResetBudgetPeriodAsync(int userId)
+    {
+        try
+        {
+            // 1. Получаем пользователя, чтобы узнать его BudgetId
+            var user = await _unitOfWork.UserRepository.GetByIdAsync(userId);
+            if (user == null) return Result.Failure("Пользователь не найден");
+
+            if (user.Budgetid == null)
+                return Result.Failure("У пользователя не настроен бюджет");
+
+            // 2. Получаем сам бюджет
+            var budget = await _unitOfWork.BudgetRepository.GetByIdAsync(user.Budgetid.Value);
+            if (budget == null)
+                return Result.Failure("Бюджет не найден в базе данных");
+
+            // 3. Обнуляем счетчики трат
+            budget.CurrentExpenses = 0;
+            budget.SpentNeeds = 0;
+            budget.SpentWants = 0;
+            budget.SpentSavings = 0;
+
+            // 4. Сохраняем изменения
+            await _unitOfWork.BudgetRepository.UpdateAsync(budget);
+            await _unitOfWork.SaveChangesAsync();
+
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure($"Ошибка при сбросе периода: {ex.Message}");
         }
     }
 }

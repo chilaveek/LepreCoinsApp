@@ -26,37 +26,37 @@ public partial class SettingsPage : ContentPage
 
         Preferences.Set("low_balance_threshold", newThreshold.ToString());
 
-        await DisplayAlert("Информация", $"Порог установлен: {newThreshold:C}", "OK");
+        await DisplayAlert("??????????", $"????? ??????????: {newThreshold:C}", "OK");
     }
 
     private async void OnClearCacheClicked(object sender, EventArgs e)
     {
         var confirm = await DisplayAlert(
-            "Подтверждение",
-            "Очистить кэш приложения?",
-            "Да",
-            "Нет");
+            "?????????????",
+            "???????? ??? ???????????",
+            "??",
+            "???");
 
         if (confirm)
         {
             try
             {
-                // TODO: вызвать сервис очистки кэша
-                await DisplayAlert("Успех", "Кэш очищен", "OK");
+                // TODO: ??????? ?????? ??????? ????
+                await DisplayAlert("?????", "??? ??????", "OK");
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Ошибка", ex.Message, "OK");
+                await DisplayAlert("??????", ex.Message, "OK");
             }
         }
     }
     private async void OnLogoutClicked(object sender, EventArgs e)
     {
         var confirm = await DisplayAlert(
-            "Подтверждение",
-            "Вы уверены, что хотите выйти?",
-            "Да",
-            "Нет");
+            "?????????????",
+            "?? ???????, ??? ?????? ??????",
+            "??",
+            "???");
 
         if (confirm)
         {
@@ -68,7 +68,7 @@ public partial class SettingsPage : ContentPage
     }
     private void OnThemeToggled(object sender, ToggledEventArgs e)
     {
-        // Изменить тему приложения
+        // ???????? ???? ??????????
         var isDarkMode = e.Value;
 
         Preferences.Set("is_dark_mode", isDarkMode);

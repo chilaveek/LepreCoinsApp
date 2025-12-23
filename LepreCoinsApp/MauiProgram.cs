@@ -63,7 +63,7 @@ namespace LepreCoinsApp
             builder.Services.AddSingleton<LoginViewModel>();
             builder.Services.AddSingleton<RegisterViewModel>();
             builder.Services.AddSingleton<AuthenticationShell>();
-
+            // Регистрируем ViewModel (чтобы DI прокинул в неё сервис)
             builder.Services.AddTransient<BudgetCreateViewModel>();
             builder.Services.AddTransient<BudgetCreatePage>();
 

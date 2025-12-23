@@ -8,7 +8,9 @@ namespace Interfaces.DTO
         decimal Amount,
         string Category,
         string Description,
-        string Type);
+        string Type,
+        int WalletId,
+        string WalletName);
 
     public record CreateExpenseDto(
         decimal Sum,

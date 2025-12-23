@@ -27,7 +27,7 @@
                 </Frame>
 
                 <!-- Кнопка добавления -->
-                <Button Text="➕ Добавить новый кошелек" 
+                <Button Text="+ Добавить новый кошелек" 
                         Command="{Binding AddWalletCommand}"
                         BackgroundColor="#3498db" 
                         TextColor="White" 

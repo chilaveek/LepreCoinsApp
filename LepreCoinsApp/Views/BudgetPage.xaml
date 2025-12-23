@@ -1,88 +1,88 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:viewModels="clr-namespace:LepreCoinsApp.Views"
              x:Class="LepreCoinsApp.Views.BudgetPage"
              BackgroundColor="#0b0e11"
-             Title="Бюджет">
-
-    <ContentPage.BindingContext>
-    </ContentPage.BindingContext>
+             Title="Мой Бюджет">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="20">
+        <VerticalStackLayout Padding="20" Spacing="25">
 
-            <VerticalStackLayout IsVisible="{Binding HasBudget}" Spacing="20">
+            <Frame BackgroundColor="#1a1d21" BorderColor="#333" CornerRadius="15" Padding="20">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Остаток общего лимита" TextColor="Gray" FontSize="14"/>
+                    <Label Text="{Binding CurrentBudget.EstablishedAmount, StringFormat='{0:N0} ₽'}" 
+                           TextColor="White" FontSize="32" FontAttributes="Bold"/>
 
-                <Frame BackgroundColor="#1a1d21" BorderColor="#333" CornerRadius="15" Padding="20">
-                    <VerticalStackLayout Spacing="5">
-                        <Label Text="Ваш лимит на период:" TextColor="Gray" FontSize="14"/>
-                        <Label Text="{Binding CurrentBudget.EstablishedAmount, StringFormat='{0:N0} ₽'}" 
-                               TextColor="White" 
-                               FontSize="36" 
-                               FontAttributes="Bold"/>
-                        <Label Text="Осталось: 100%" TextColor="#2ecc71" FontSize="12" Margin="0,5,0,0"/>
+                    <ProgressBar Progress="{Binding CurrentBudget.CurrentExpenses}" 
+                                 ProgressColor="#2ecc71" HeightRequest="8"/>
+                    <Button Text="Перезапустить бюджетный период"
+        Command="{Binding ResetPeriodCommand}"
+        BackgroundColor="#f39c12"
+        TextColor="White"
+        FontAttributes="Bold"
+        CornerRadius="10"
+        HeightRequest="50"
+        Margin="20,10"
+        VerticalOptions="End">
+                        <Button.Shadow>
+                            <Shadow Brush="Black" Offset="0,2" Radius="5" Opacity="0.5" />
+                        </Button.Shadow>
+                    </Button>
+
+                    <HorizontalStackLayout Spacing="5">
+                        <Label Text="Потрачено:" TextColor="Gray" FontSize="12"/>
+                        <Label Text="{Binding CurrentBudget.CurrentExpenses, StringFormat='{0:N0} ₽'}" 
+                               TextColor="#2ecc71" FontSize="12" FontAttributes="Bold"/>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Frame>
+
+            <Label Text="Распределение по категориям" TextColor="White" FontSize="18" FontAttributes="Bold" Margin="0,10,0,0"/>
+
+            <VerticalStackLayout Spacing="8">
+                <Grid ColumnDefinitions="*, Auto">
+                    <VerticalStackLayout>
+                        <Label Text="Нужды" TextColor="Crimson" FontAttributes="Bold" FontSize="16"/>
+                        <Label Text="{Binding NeedsRemaining, StringFormat='Осталось: {0:N0} ₽'}" TextColor="Gray" FontSize="12"/>
                     </VerticalStackLayout>
-                </Frame>
-
-                <Grid ColumnDefinitions="*, *" RowDefinitions="Auto, Auto" ColumnSpacing="15" RowSpacing="15">
-
-                    <Frame Grid.Row="0" Grid.Column="0" BackgroundColor="#1a1d21" BorderColor="#333" CornerRadius="15" Padding="15">
-                        <VerticalStackLayout Spacing="5">
-                            <Label Text="Нужды" TextColor="Crimson" FontSize="12" FontAttributes="Bold"/>
-                            <Label Text="{Binding TargetMandatory, StringFormat='{0:N0} ₽'}" TextColor="White" FontSize="18" FontAttributes="Bold"/>
-                            <Label Text="{Binding CurrentBudget.NeedsPercentage, StringFormat='{0}% от лимита'}" TextColor="Gray" FontSize="10"/>
-                        </VerticalStackLayout>
-                    </Frame>
-
-                    <Frame Grid.Row="0" Grid.Column="1" BackgroundColor="#1a1d21" BorderColor="#333" CornerRadius="15" Padding="15">
-                        <VerticalStackLayout Spacing="5">
-                            <Label Text="Хотелки" TextColor="Orange" FontSize="12" FontAttributes="Bold"/>
-                            <Label Text="{Binding TargetOptional, StringFormat='{0:N0} ₽'}" TextColor="White" FontSize="18" FontAttributes="Bold"/>
-                            <Label Text="{Binding CurrentBudget.WantsPercentage, StringFormat='{0}% от лимита'}" TextColor="Gray" FontSize="10"/>
-                        </VerticalStackLayout>
-                    </Frame>
-
-                    <Frame Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" BackgroundColor="#1a1d21" BorderColor="#2ecc71" CornerRadius="15" Padding="15">
-                        <HorizontalStackLayout Spacing="15" VerticalOptions="Center">
-                            <Label Text="💰" FontSize="22"/>
-                            <VerticalStackLayout>
-                                <Label Text="В копилку (минимум)" TextColor="#2ecc71" FontSize="12" FontAttributes="Bold"/>
-                                <Label Text="{Binding TargetSavings, StringFormat='{0:N0} ₽'}" TextColor="White" FontSize="18" FontAttributes="Bold"/>
-                            </VerticalStackLayout>
-                        </HorizontalStackLayout>
-                    </Frame>
+                    <Label Grid.Column="1" Text="{Binding CurrentBudget.NeedsPercentage, StringFormat='{0}%'}" 
+                           TextColor="White" VerticalOptions="Center"/>
                 </Grid>
-
-                <Button Text="ИЗМЕНИТЬ ПЛАН БЮДЖЕТА" 
-                        Command="{Binding CreateBudgetCommand}"
-                        BackgroundColor="Transparent"
-                        BorderColor="#444"
-                        BorderWidth="1"
-                        TextColor="Gray"
-                        FontSize="12"
-                        Margin="0,20,0,0"
-                        CornerRadius="10"
-                        HeightRequest="45"/>
+                <ProgressBar Progress="{Binding NeedsProgress}" ProgressColor="Crimson" HeightRequest="10"/>
             </VerticalStackLayout>
 
-            <VerticalStackLayout IsVisible="{Binding HasNoBudget}" 
-                                 VerticalOptions="CenterAndExpand" 
-                                 HorizontalOptions="Center" 
-                                 Spacing="20"
-                                 Margin="0,100,0,0">
-                <Label Text="Бюджет еще не установлен" 
-                       TextColor="Gray" 
-                       FontSize="18" 
-                       HorizontalOptions="Center"/>
-                <Button Text="Создать бюджет" 
-                        Command="{Binding CreateBudgetCommand}"
-                        BackgroundColor="#2ecc71"
-                        TextColor="Black"
-                        FontAttributes="Bold"
-                        WidthRequest="200"
-                        CornerRadius="25"/>
+            <VerticalStackLayout Spacing="8">
+                <Grid ColumnDefinitions="*, Auto">
+                    <VerticalStackLayout>
+                        <Label Text="Хотелки" TextColor="Orange" FontAttributes="Bold" FontSize="16"/>
+                        <Label Text="{Binding WantsRemaining, StringFormat='Осталось: {0:N0} ₽'}" TextColor="Gray" FontSize="12"/>
+                    </VerticalStackLayout>
+                    <Label Grid.Column="1" Text="{Binding CurrentBudget.WantsPercentage, StringFormat='{0}%'}" 
+                           TextColor="White" VerticalOptions="Center"/>
+                </Grid>
+                <ProgressBar Progress="{Binding WantsProgress}" ProgressColor="Orange" HeightRequest="10"/>
             </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="8">
+                <Grid ColumnDefinitions="*, Auto">
+                    <VerticalStackLayout>
+                        <Label Text="Копилка" TextColor="MediumSeaGreen" FontAttributes="Bold" FontSize="16"/>
+                        <Label Text="{Binding SavingsRemaining, StringFormat='Осталось: {0:N0} ₽'}" TextColor="Gray" FontSize="12"/>
+                    </VerticalStackLayout>
+                    <Label Grid.Column="1" Text="{Binding CurrentBudget.SavingsPercentage, StringFormat='{0}%'}" 
+                           TextColor="White" VerticalOptions="Center"/>
+                </Grid>
+                <ProgressBar Progress="{Binding SavingsProgress}" ProgressColor="MediumSeaGreen" HeightRequest="10"/>
+            </VerticalStackLayout>
+
+            <Button Text="НАСТРОИТЬ ЛИМИТЫ" 
+                    Command="{Binding CreateBudgetCommand}"
+                    BackgroundColor="Transparent"
+                    BorderColor="#444"
+                    BorderWidth="1"
+                    TextColor="Gray"
+                    Margin="0,20,0,0"/>
 
         </VerticalStackLayout>
     </ScrollView>

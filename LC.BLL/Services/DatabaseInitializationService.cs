@@ -41,26 +41,22 @@ public class DatabaseInitializationService : IDatabaseInitializationService
     }
     private async Task SeedCategoriesAsync()
     {
-        // Доходы
         if (!await _context.IncomeCategories.AnyAsync())
         {
             _context.IncomeCategories.AddRange(
-                new IncomeCategory { Category = "Зарплата" },   // Id будет 1
-                new IncomeCategory { Category = "Фриланс" },   // 2
-                new IncomeCategory { Category = "Подарок" },   // 3
-                new IncomeCategory { Category = "Другое" }     // 4
+                new IncomeCategory { Category = "Зарплата" },
+                new IncomeCategory { Category = "Подарок" },
+                new IncomeCategory { Category = "Перевод" },
+                new IncomeCategory { Category = "Другое" }
             );
         }
 
-        // Расходы
         if (!await _context.ExpenseCategories.AnyAsync())
         {
             _context.ExpenseCategories.AddRange(
-                new ExpenseCategory { Name = "Продукты" },      // Id 1
-                new ExpenseCategory { Name = "Транспорт" },     // 2
-                new ExpenseCategory { Name = "Дом" },           // 3
-                new ExpenseCategory { Name = "Здоровье" },      // 4
-                new ExpenseCategory { Name = "Развлечения" }    // 5
+                new ExpenseCategory { Name = "Нужды" },      // Будет Id 1
+                new ExpenseCategory { Name = "Хотелки" },    // Будет Id 2
+                new ExpenseCategory { Name = "Копилка" }     // Будет Id 3
             );
         }
 
