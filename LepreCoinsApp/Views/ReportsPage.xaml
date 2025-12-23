@@ -2,259 +2,115 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="LepreCoinsApp.Views.ReportsPage"
-             Title="Отчеты"
+             Title="Аналитика"
              BackgroundColor="#0F1419">
 
-    <Grid RowDefinitions="Auto,*" ColumnDefinitions="*" Padding="20">
+    <ScrollView>
+        <VerticalStackLayout Spacing="15" Padding="20">
+            <Label Text="📊 Аналитика бюджета" FontSize="26" FontAttributes="Bold" TextColor="White" Margin="0,0,0,10"/>
 
-        <!-- ====== ЗАГОЛОВОК ====== -->
-        <StackLayout Grid.Row="0" Spacing="5">
-            <Label Text="📊 Отчеты" 
-                   FontSize="28" 
-                   FontAttributes="Bold" 
-                   TextColor="#FFFFFF"/>
-        </StackLayout>
+            <Frame BackgroundColor="#1a1f26" CornerRadius="12" BorderColor="#222" Padding="15">
+                <VerticalStackLayout Spacing="15">
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="15">
+                        <VerticalStackLayout Grid.Column="0">
+                            <Label Text="ДАТА НАЧАЛА" TextColor="#777" FontSize="10" FontAttributes="Bold"/>
+                            <DatePicker Date="{Binding PeriodStartDate}" TextColor="White"/>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1">
+                            <Label Text="ДАТА КОНЦА" TextColor="#777" FontSize="10" FontAttributes="Bold"/>
+                            <DatePicker Date="{Binding PeriodEndDate}" TextColor="White"/>
+                        </VerticalStackLayout>
+                    </Grid>
 
-        <!-- ====== ОСНОВНОЕ СОДЕРЖИМОЕ ====== -->
-        <ScrollView Grid.Row="1">
-            <VerticalStackLayout Spacing="15" Padding="0,15,0,0">
+                    <BoxView HeightRequest="1" Color="#222" Margin="0,5"/>
 
-                <!-- ====== ВЫБОР ПЕРИОДА ====== -->
-                <Frame BorderColor="#333" CornerRadius="12" Padding="12" BackgroundColor="#1a1f26" HasShadow="False">
-                    <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="8">
-                        <Button Grid.Column="0"
-                                Text="Текущий месяц"
-                                Command="{Binding SetCurrentMonthCommand}"
-                                BackgroundColor="#3498db"
-                                TextColor="#FFFFFF"
-                                FontSize="14"
-                                Padding="8,6"
-                                CornerRadius="6"/>
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="СОРТИРОВКА" TextColor="#777" FontSize="10" FontAttributes="Bold"/>
+                        <Picker SelectedItem="{Binding SelectedSortType}" TextColor="White" TitleColor="#555" Title="Выберите порядок">
+                            <Picker.Items>
+                                <x:String>Сначала новые</x:String>
+                                <x:String>Сначала дорогие</x:String>
+                                <x:String>Сначала дешевые</x:String>
+                                <x:String>Сначала доходы</x:String>
+                                <x:String>Сначала расходы</x:String>
+                            </Picker.Items>
+                        </Picker>
+                    </VerticalStackLayout>
 
-                        <Button Grid.Column="1"
-                                Text="Последние 30 дней"
-                                Command="{Binding SetLast30DaysCommand}"
-                                BackgroundColor="#3498db"
-                                TextColor="#FFFFFF"
-                                FontSize="14"
-                                Padding="8,6"
-                                CornerRadius="6"/>
+                    <Button Text="СФОРМИРОВАТЬ ОТЧЕТ" 
+                            Command="{Binding GenerateReportCommand}" 
+                            BackgroundColor="#2ecc71" 
+                            TextColor="White" 
+                            FontAttributes="Bold" 
+                            HeightRequest="50"
+                            CornerRadius="8"/>
+                </VerticalStackLayout>
+            </Frame>
 
-                        <Button Grid.Column="2"
-                                Text="Годовой"
-                                Command="{Binding SetCurrentYearCommand}"
-                                BackgroundColor="#3498db"
-                                TextColor="#FFFFFF"
-                                FontSize="14"
-                                Padding="8,6"
-                                CornerRadius="6"/>
+            <Label Text="{Binding CustomDateError}" TextColor="#e74c3c" FontSize="12" HorizontalOptions="Center"/>
 
-                        <Button Grid.Column="3"
-                                Text="Пользовательский"
-                                Command="{Binding OpenCustomPeriodCommand}"
-                                BackgroundColor="#f39c12"
-                                TextColor="#FFFFFF"
-                                FontSize="14"
-                                Padding="8,6"
-                                CornerRadius="6"/>
+            <VerticalStackLayout IsVisible="{Binding IsReportVisible}" Spacing="15">
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                    <Frame Grid.Column="0" BackgroundColor="#2d1a1a" BorderColor="#e74c3c" Padding="12" CornerRadius="10">
+                        <VerticalStackLayout>
+                            <Label Text="MAX РАСХОД" FontSize="10" TextColor="#ff7675" FontAttributes="Bold"/>
+                            <Label Text="{Binding MaxExpenseCategory}" TextColor="White" FontSize="13" MaxLines="1" LineBreakMode="TailTruncation"/>
+                            <Label Text="{Binding MaxExpenseAmount, StringFormat='{0:C}'}" TextColor="White" FontAttributes="Bold" FontSize="15"/>
+                        </VerticalStackLayout>
+                    </Frame>
+                    <Frame Grid.Column="1" BackgroundColor="#1a2d21" BorderColor="#2ecc71" Padding="12" CornerRadius="10">
+                        <VerticalStackLayout>
+                            <Label Text="MAX ДОХОД" FontSize="10" TextColor="#55efc4" FontAttributes="Bold"/>
+                            <Label Text="{Binding MaxIncomeCategory}" TextColor="White" FontSize="13" MaxLines="1" LineBreakMode="TailTruncation"/>
+                            <Label Text="{Binding MaxIncomeAmount, StringFormat='{0:C}'}" TextColor="White" FontAttributes="Bold" FontSize="15"/>
+                        </VerticalStackLayout>
+                    </Frame>
+                </Grid>
+
+                <Frame BackgroundColor="#1a1f26" Padding="15" CornerRadius="12" BorderColor="#333">
+                    <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,*" RowSpacing="12">
+                        <Label Grid.Row="0" Grid.Column="0" Text="Общий доход" TextColor="#bbb"/>
+                        <Label Grid.Row="0" Grid.Column="1" Text="{Binding TotalIncome, StringFormat='{0:C}'}" TextColor="#2ecc71" HorizontalOptions="End" FontAttributes="Bold"/>
+
+                        <Label Grid.Row="1" Grid.Column="0" Text="Общий расход" TextColor="#bbb"/>
+                        <Label Grid.Row="1" Grid.Column="1" Text="{Binding TotalExpenses, StringFormat='{0:C}'}" TextColor="#e74c3c" HorizontalOptions="End" FontAttributes="Bold"/>
+
+                        <BoxView Grid.Row="2" Grid.ColumnSpan="2" HeightRequest="1" Color="#222" VerticalOptions="Start"/>
+                        <Label Grid.Row="2" Grid.Column="0" Text="Итоговая прибыль" FontAttributes="Bold" TextColor="White" VerticalOptions="End"/>
+                        <Label Grid.Row="2" Grid.Column="1" Text="{Binding NetCash, StringFormat='{0:C}'}" TextColor="#3498db" FontAttributes="Bold" FontSize="18" HorizontalOptions="End"/>
                     </Grid>
                 </Frame>
 
-                <!-- Пользовательский период -->
-                <StackLayout IsVisible="{Binding IsCustomPeriodVisible}" Spacing="8" BackgroundColor="#1a1f26" Padding="12">
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                        <StackLayout Grid.Column="0" Spacing="4">
-                            <Label Text="От:" FontSize="10" TextColor="#999"/>
-                            <DatePicker Date="{Binding PeriodStartDate}" TextColor="#FFFFFF"/>
-                        </StackLayout>
-                        <StackLayout Grid.Column="1" Spacing="4">
-                            <Label Text="До:" FontSize="10" TextColor="#999"/>
-                            <DatePicker Date="{Binding PeriodEndDate}" TextColor="#FFFFFF"/>
-                        </StackLayout>
-                    </Grid>
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                        <Button Grid.Column="0"
-                                Text="Генерировать"
-                                Command="{Binding ApplyCustomPeriodCommand}"
-                                BackgroundColor="#2ecc71"
-                                TextColor="#FFFFFF"
-                                Padding="8,6"
-                                CornerRadius="6"/>
-                        <Button Grid.Column="1"
-                                Text="Отмена"
-                                Command="{Binding CancelCustomPeriodCommand}"
-                                BackgroundColor="#555"
-                                TextColor="#FFFFFF"
-                                Padding="8,6"
-                                CornerRadius="6"/>
-                    </Grid>
-                </StackLayout>
+                <Frame BackgroundColor="#1a1f26" Padding="15" CornerRadius="12" BorderColor="#333">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="ДЕТАЛИЗАЦИЯ ОПЕРАЦИЙ" TextColor="#777" FontSize="10" FontAttributes="Bold"/>
 
-                <!-- Кнопка генерации -->
-                <Button Text="Создать отчет"
-                        Command="{Binding GenerateReportCommand}"
-                        BackgroundColor="#2ecc71"
-                        TextColor="#FFFFFF"
-                        FontSize="14"
-                        FontAttributes="Bold"
-                        Padding="12,8"
-                        CornerRadius="8"/>
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding ReportTransactions}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate>
+                                    <Frame BackgroundColor="#0a0a0a" BorderColor="#222" Margin="0,0,0,8" Padding="12" CornerRadius="8">
+                                        <Grid ColumnDefinitions="65,*,Auto">
+                                            <Label Text="{Binding Type}" FontSize="11" TextColor="#666" VerticalOptions="Center"/>
+                                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Margin="10,0">
+                                                <Label Text="{Binding Description}" TextColor="White" FontSize="14"/>
+                                                <Label Text="{Binding Date, StringFormat='{0:dd.MM.yyyy}'}" TextColor="#777" FontSize="11"/>
+                                            </VerticalStackLayout>
+                                            <Label Grid.Column="2" Text="{Binding Amount, StringFormat='{0:N2}'}" TextColor="White" FontAttributes="Bold" VerticalOptions="Center"/>
+                                        </Grid>
+                                    </Frame>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
 
-                <!-- ====== ГРАФИКИ ОТЧЕТА ====== -->
-                <Frame IsVisible="{Binding IsReportVisible}"
-                       BorderColor="#27ae60"
-                       CornerRadius="12"
-                       Padding="15"
-                       BackgroundColor="#1a1f26"
-                       HasShadow="False">
-                    <VerticalStackLayout Spacing="20">
-
-                        <!-- ====== 1. БОЛЬШИЕ ЧИСЛА (3 карточки) ====== -->
-                        <Grid RowDefinitions="Auto" ColumnDefinitions="*,*,*" ColumnSpacing="10">
-
-                            <!-- Доходы -->
-                            <Frame Grid.Column="0" BorderColor="Transparent" CornerRadius="8" Padding="12" BackgroundColor="#0f3f0f" HasShadow="False">
-                                <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                                    <Label Text="💰" FontSize="32" HorizontalOptions="Center"/>
-                                    <Label Text="{Binding TotalIncome, StringFormat='{0:F0}'}"
-                                           FontSize="20"
-                                           FontAttributes="Bold"
-                                           TextColor="#2ecc71"
-                                           HorizontalTextAlignment="Center"/>
-                                </VerticalStackLayout>
-                            </Frame>
-
-                            <!-- Расходы -->
-                            <Frame Grid.Column="1" BorderColor="Transparent" CornerRadius="8" Padding="12" BackgroundColor="#3f0f0f" HasShadow="False">
-                                <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                                    <Label Text="💸" FontSize="32" HorizontalOptions="Center"/>
-                                    <Label Text="{Binding TotalExpenses, StringFormat='{0:F0}'}"
-                                           FontSize="20"
-                                           FontAttributes="Bold"
-                                           TextColor="#e74c3c"
-                                           HorizontalTextAlignment="Center"/>
-                                </VerticalStackLayout>
-                            </Frame>
-
-                            <!-- Баланс -->
-                            <Frame Grid.Column="2" BorderColor="Transparent" CornerRadius="8" Padding="12" BackgroundColor="#0f0f3f" HasShadow="False">
-                                <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                                    <Label Text="🎯" FontSize="32" HorizontalOptions="Center"/>
-                                    <Label Text="{Binding NetCash, StringFormat='{0:F0}'}"
-                                           FontSize="20"
-                                           FontAttributes="Bold"
-                                           TextColor="#3498db"
-                                           HorizontalTextAlignment="Center"/>
-                                </VerticalStackLayout>
-                            </Frame>
-                        </Grid>
-
-                        <!-- ====== 2. КРУГОВАЯ ДИАГРАММА ====== -->
-                        <Frame BorderColor="#333" CornerRadius="10" Padding="12" BackgroundColor="#111" HasShadow="False">
-                            <VerticalStackLayout Spacing="8">
-                                <Label Text="Структура" FontSize="12" FontAttributes="Bold" TextColor="#FFFFFF"/>
-                                <GraphicsView x:Name="PieChartView"
-                      HeightRequest="200"
-                      HorizontalOptions="Fill"
-                      BackgroundColor="#0a0a0a"/>
-                            </VerticalStackLayout>
-                        </Frame>
-
-                        <!-- ====== 3. СТОЛБЧАТАЯ ДИАГРАММА ====== -->
-                        <Frame BorderColor="#333" CornerRadius="10" Padding="12" BackgroundColor="#111" HasShadow="False">
-                            <VerticalStackLayout Spacing="8">
-                                <Label Text="Сравнение" FontSize="12" FontAttributes="Bold" TextColor="#FFFFFF"/>
-                                <GraphicsView x:Name="BarChartView"
-                      HeightRequest="220"
-                      HorizontalOptions="Fill"
-                      BackgroundColor="#0a0a0a"/>
-                            </VerticalStackLayout>
-                        </Frame>
-
-                        <!-- ====== 4. СПИСОК ТРАНЗАКЦИЙ ====== -->
-                        <Frame BorderColor="#333" CornerRadius="10" Padding="12" BackgroundColor="#111" HasShadow="False">
-                            <VerticalStackLayout Spacing="8">
-                                <Label Text="📋 Последние операции" FontSize="12" FontAttributes="Bold" TextColor="#FFFFFF"/>
-
-                                <CollectionView ItemsSource="{Binding ReportTransactions}"
-                                                SelectionMode="None"
-                                                MaximumHeightRequest="200">
-                                    <CollectionView.ItemTemplate>
-                                        <DataTemplate>
-                                            <Frame BorderColor="#333" CornerRadius="6" Padding="10" Margin="0,4" BackgroundColor="#0a0a0a" HasShadow="False">
-                                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
-                                                    <Label Grid.Column="0"
-                                                           Text="{Binding Type, StringFormat='{0}'}"
-                                                           FontSize="16"
-                                                           VerticalTextAlignment="Center"/>
-
-                                                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                                                        <Label Text="{Binding Description}"
-                                                               FontSize="11"
-                                                               FontAttributes="Bold"
-                                                               TextColor="#FFFFFF"/>
-                                                        <Label Text="{Binding Date, StringFormat='dd.MM.yyyy HH:mm'}"
-                                                               FontSize="9"
-                                                               TextColor="#666"/>
-                                                    </VerticalStackLayout>
-
-                                                    <Label Grid.Column="2"
-                                                           Text="{Binding Amount, StringFormat='{0:F0}'}"
-                                                           FontSize="11"
-                                                           FontAttributes="Bold"
-                                                           TextColor="#3498db"
-                                                           VerticalTextAlignment="Center"/>
-                                                </Grid>
-                                            </Frame>
-                                        </DataTemplate>
-                                    </CollectionView.ItemTemplate>
-                                </CollectionView>
-                            </VerticalStackLayout>
-                        </Frame>
-
-                        <!-- ====== 5. КНОПКИ ДЕЙСТВИЯ ====== -->
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                            <Button Grid.Column="0"
-                                    Text="💾 PDF"
-                                    Command="{Binding SaveReportToPdfCommand}"
-                                    BackgroundColor="#3498db"
-                                    TextColor="#FFFFFF"
-                                    FontAttributes="Bold"
-                                    Padding="10,10"
-                                    CornerRadius="8"/>
-
-                            <Button Grid.Column="1"
-                                    Text="✖️ Закрыть"
-                                    Command="{Binding CloseReportCommand}"
-                                    BackgroundColor="#e74c3c"
-                                    TextColor="#FFFFFF"
-                                    FontAttributes="Bold"
-                                    Padding="10,10"
-                                    CornerRadius="8"/>
-                        </Grid>
-
+                        <Label IsVisible="{Binding ReportTransactions.Count, Converter={StaticResource IntToBoolInvertedConverter}}" 
+               Text="Выше находятся все транзакции за данный период" TextColor="#888" HorizontalOptions="Center" Margin="20"/>
                     </VerticalStackLayout>
                 </Frame>
 
-                <!-- Пусто сообщение -->
-                <Frame IsVisible="{Binding IsReportVisible, Converter={StaticResource InvertedBoolConverter}}"
-                       BorderColor="#333"
-                       CornerRadius="12"
-                       Padding="20"
-                       BackgroundColor="#1a1f26"
-                       HasShadow="False">
-                    <VerticalStackLayout Spacing="10" HorizontalOptions="Center">
-                        <Label Text="📊" FontSize="64" HorizontalOptions="Center"/>
-                        <Label Text="Выберите период и посмотрите отчёт"
-                               FontSize="12"
-                               TextColor="#999"
-                               HorizontalTextAlignment="Center"/>
-                    </VerticalStackLayout>
-                </Frame>
-
+                <Button Text="ЭКСПОРТ В PDF" Command="{Binding SaveReportToPdfCommand}" 
+                        BackgroundColor="#34495e" TextColor="White" CornerRadius="8" HeightRequest="45" Margin="0,5,0,20"/>
             </VerticalStackLayout>
-        </ScrollView>
-
-    </Grid>
-
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>
