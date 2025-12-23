@@ -11,5 +11,6 @@ public partial class AppShell : Shell
         Routing.RegisterRoute("add-income", typeof(MainPage));
         Routing.RegisterRoute("edit-transaction", typeof(MainPage));
         Routing.RegisterRoute("settings", typeof(SettingsPage));
+        Routing.RegisterRoute(nameof(BudgetCreatePage), typeof(BudgetCreatePage));
     }
 }

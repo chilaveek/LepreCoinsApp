@@ -13,7 +13,7 @@ public class AuthenticationService : IAuthenticationService
         _context = context;
     }
 
-    public async Task<User> LoginAsync(string username, string password)  // ← ДОБАВИТЬ <User>
+    public async Task<User> LoginAsync(string username, string password)
     {
         var hash = PasswordHasher.Hash(password);
         return await _context.Users
@@ -22,7 +22,7 @@ public class AuthenticationService : IAuthenticationService
                 u.PasswordHash == hash);
     }
 
-    public async Task<User> RegisterAsync(User user, string password)  // ← ДОБАВИТЬ <User>
+    public async Task<User> RegisterAsync(User user, string password) 
     {
         if (await _context.Users.AnyAsync(u => u.Name == user.Name))
             throw new Exception("Пользователь уже существует");

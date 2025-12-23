@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:LepreCoinsApp.ViewModels"
+             x:Class="LepreCoinsApp.Views.BudgetCreatePage"
+             BackgroundColor="#0b0e11"
+             Title="Настройка бюджета">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="25" Spacing="25">
+
+            <VerticalStackLayout Spacing="10">
+                <Label Text="Общая сумма лимита" TextColor="Gray" FontSize="14"/>
+                <Frame BackgroundColor="#1a1d21" Padding="15,2" CornerRadius="10" BorderColor="#333">
+                    <Entry Text="{Binding EstablishedAmount}" 
+                           Keyboard="Numeric" 
+                           TextColor="White" 
+                           FontSize="26"
+                           FontAttributes="Bold"
+                           HorizontalTextAlignment="Center"/>
+                </Frame>
+            </VerticalStackLayout>
+
+            <BoxView HeightRequest="1" Color="#333" Margin="0,10"/>
+
+            <VerticalStackLayout Spacing="5">
+                <Grid ColumnDefinitions="*, Auto, Auto">
+                    <Label Text="Нужды" TextColor="Gray" FontSize="14" VerticalOptions="Center"/>
+                    <Label Grid.Column="1" 
+                           Text="{Binding NeedsMoney, StringFormat='{0:N0} ₽'}" 
+                           TextColor="White" 
+                           FontSize="16"
+                           Margin="0,0,10,0"
+                           VerticalOptions="Center"/>
+                    <Label Grid.Column="2" 
+                           Text="{Binding NeedsPercentage, StringFormat='{0}%'}" 
+                           TextColor="Crimson" 
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           VerticalOptions="Center"/>
+                </Grid>
+                <Slider Minimum="0" Maximum="100" 
+                        Value="{Binding NeedsPercentage}" 
+                        MinimumTrackColor="Crimson"
+                        ThumbColor="Crimson"/>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="5">
+                <Grid ColumnDefinitions="*, Auto, Auto">
+                    <Label Text="Хотелки" TextColor="Gray" FontSize="14" VerticalOptions="Center"/>
+                    <Label Grid.Column="1" 
+                           Text="{Binding WantsMoney, StringFormat='{0:N0} ₽'}" 
+                           TextColor="White" 
+                           FontSize="16"
+                           Margin="0,0,10,0"
+                           VerticalOptions="Center"/>
+                    <Label Grid.Column="2" 
+                           Text="{Binding WantsPercentage, StringFormat='{0}%'}" 
+                           TextColor="Orange" 
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           VerticalOptions="Center"/>
+                </Grid>
+                <Slider Minimum="0" Maximum="100" 
+                        Value="{Binding WantsPercentage}" 
+                        MinimumTrackColor="Orange"
+                        ThumbColor="Orange"/>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="5">
+                <Grid ColumnDefinitions="*, Auto, Auto">
+                    <Label Text="Сбережения" TextColor="Gray" FontSize="14" VerticalOptions="Center"/>
+                    <Label Grid.Column="1" 
+                           Text="{Binding SavingsMoney, StringFormat='{0:N0} ₽'}" 
+                           TextColor="White" 
+                           FontSize="16"
+                           Margin="0,0,10,0"
+                           VerticalOptions="Center"/>
+                    <Label Grid.Column="2" 
+                           Text="{Binding SavingsPercentage, StringFormat='{0}%'}" 
+                           TextColor="MediumSeaGreen" 
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           VerticalOptions="Center"/>
+                </Grid>
+                <Slider Minimum="0" Maximum="100" 
+                        Value="{Binding SavingsPercentage}" 
+                        MinimumTrackColor="MediumSeaGreen"
+                        ThumbColor="MediumSeaGreen"/>
+            </VerticalStackLayout>
+
+            <BoxView HeightRequest="1" Color="#333" Margin="0,10"/>
+
+            <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
+                <Label Text="Итого распределено:" TextColor="Gray"/>
+                <Label TextColor="White" FontAttributes="Bold">
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span Text="{Binding NeedsPercentage}" />
+                            <Span Text=" + " />
+                            <Span Text="{Binding WantsPercentage}" />
+                            <Span Text=" + " />
+                            <Span Text="{Binding SavingsPercentage}" />
+                            <Span Text=" = 100%" TextColor="#2ecc71" />
+                        </FormattedString>
+                    </Label.FormattedText>
+                </Label>
+            </HorizontalStackLayout>
+
+            <Button Text="СОХРАНИТЬ БЮДЖЕТ" 
+                    Command="{Binding SaveBudgetCommand}"
+                    BackgroundColor="#2ecc71"
+                    TextColor="Black"
+                    FontAttributes="Bold"
+                    HeightRequest="55"
+                    CornerRadius="12"
+                    Margin="0,10,0,20"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

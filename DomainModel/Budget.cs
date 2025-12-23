@@ -15,7 +15,10 @@ public partial class Budget
 
     public DateOnly? PeriodEnd { get; set; }
 
-    public virtual ICollection<ExpenseCategory> ExpenseCategories { get; set; } = new List<ExpenseCategory>();
+    public int NeedsPercentage { get; set; }
 
-    public virtual ICollection<User> Users { get; set; } = new List<User>();
+    public int WantsPercentage { get; set; }
+
+    public int SavingsPercentage { get; set; }
+
 }

@@ -36,6 +36,17 @@ public partial class FamilybudgetdbContext : DbContext
 
             entity.Property(e => e.CurrentExpenses)
                 .HasPrecision(19);
+            entity.Property(e => e.EstablishedAmount)
+                .HasPrecision(19);
+            entity.Property(e => e.NeedsPercentage)
+                .IsRequired()
+                .HasDefaultValue(50);
+            entity.Property(e => e.WantsPercentage)
+                .IsRequired()
+                .HasDefaultValue(30);
+            entity.Property(e => e.SavingsPercentage)
+                .IsRequired()
+                .HasDefaultValue(20);
         });
 
         // ===== EXPENSE =====
@@ -80,10 +91,6 @@ public partial class FamilybudgetdbContext : DbContext
 
             entity.Property(e => e.CategoryType)
                 .HasMaxLength(255);
-
-            entity.HasOne(e => e.Budget)
-                .WithMany(b => b.ExpenseCategories)
-                .HasForeignKey(e => e.Budgetid);
         });
 
         // ===== FAMILY =====
@@ -209,9 +216,6 @@ public partial class FamilybudgetdbContext : DbContext
                 .WithMany(f => f.Users)
                 .HasForeignKey(e => e.Familyid);
 
-            entity.HasOne(e => e.Budget)
-                .WithMany(b => b.Users)
-                .HasForeignKey(e => e.Budgetid);
         });
 
         // ===== WALLET =====

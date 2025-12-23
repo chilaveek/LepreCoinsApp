@@ -1,231 +1,102 @@
 ﻿using ApplicationCore.Interfaces;
-using Interfaces;
 using Interfaces.DTO;
 using Interfaces.Service;
+using LC.BLL.Session;
 using LepreCoins.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace LC.BLL.Services
+namespace LC.BLL.Services;
+
+public class BudgetService : IBudgetService
 {
-    public class BudgetService : IBudgetService
+    private readonly IUnitOfWork _context;
+
+    public BudgetService(IUnitOfWork context)
     {
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly INotificationService _notificationService;
+        _context = context;
+    }
 
-        public BudgetService(IUnitOfWork unitOfWork, INotificationService notificationService)
+    public async Task<bool> CreateBudgetAsync(CreateBudgetDto dto)
+    {
+        try
         {
-            _unitOfWork = unitOfWork;
-            _notificationService = notificationService;
-        }
+            var user = await _context.UserRepository.GetByIdAsync(dto.UserId);
+            if (user == null) return false;
 
-        public async Task<Result<BudgetDto>> CreateBudgetAsync(CreateBudgetDto dto)
-        {
-            try
+            Budget budgetEntity;
+
+            if (user.Budgetid.HasValue && user.Budgetid > 0)
             {
-                var budget = new Budget
+                budgetEntity = await _context.BudgetRepository.GetByIdAsync(user.Budgetid.Value);
+
+                if (budgetEntity != null)
                 {
-                    EstablishedAmount = dto.EstablishedAmount,
-                    CurrentExpenses = 0,
-                    PeriodStart = dto.PeriodStart,
-                    PeriodEnd = dto.PeriodEnd
-                };
+                    budgetEntity.EstablishedAmount = dto.Amount;
+                    budgetEntity.PeriodStart = dto.PeriodStart;
+                    budgetEntity.PeriodEnd = dto.PeriodEnd;
+                    budgetEntity.NeedsPercentage = dto.Needs;
+                    budgetEntity.WantsPercentage = dto.Wants;
+                    budgetEntity.SavingsPercentage = dto.Savings;
 
-                await _unitOfWork.BudgetRepository.AddAsync(budget);
-                await _unitOfWork.SaveChangesAsync();
-
-                var budgetDto = new BudgetDto(
-                    budget.Id,
-                    budget.EstablishedAmount ?? 0,
-                    budget.CurrentExpenses ?? 0,
-                    budget.PeriodStart ?? DateOnly.MinValue,
-                    budget.PeriodEnd ?? DateOnly.MinValue,
-                    new List<CategoryBudgetDto>());
-
-                return Result<BudgetDto>.Success(budgetDto);
-            }
-            catch (Exception ex)
-            {
-                return Result<BudgetDto>.Failure($"Ошибка при создании бюджета: {ex.Message}");
-            }
-        }
-
-        public async Task<Result<BudgetDto>> UpdateBudgetAsync(int budgetId, UpdateBudgetDto dto)
-        {
-            try
-            {
-                var budget = await _unitOfWork.BudgetRepository.GetByIdAsync(budgetId);
-                if (budget == null)
-                    return Result<BudgetDto>.Failure("Бюджет не найден");
-
-                budget.EstablishedAmount = dto.EstablishedAmount;
-                budget.PeriodStart = dto.PeriodStart;
-                budget.PeriodEnd = dto.PeriodEnd;
-
-                await _unitOfWork.BudgetRepository.UpdateAsync(budget);
-                await _unitOfWork.SaveChangesAsync();
-
-                var budgetDto = new BudgetDto(
-                    budget.Id,
-                    budget.EstablishedAmount ?? 0,
-                    budget.CurrentExpenses ?? 0,
-                    budget.PeriodStart ?? DateOnly.MinValue,
-                    budget.PeriodEnd ?? DateOnly.MinValue,
-                    new List<CategoryBudgetDto>());
-
-                return Result<BudgetDto>.Success(budgetDto);
-            }
-            catch (Exception ex)
-            {
-                return Result<BudgetDto>.Failure($"Ошибка при обновлении бюджета: {ex.Message}");
-            }
-        }
-
-        public async Task<Result<BudgetDto>> GetBudgetAsync(int budgetId)
-        {
-            try
-            {
-                var budget = await _unitOfWork.BudgetRepository.GetByIdAsync(budgetId);
-                if (budget == null)
-                    return Result<BudgetDto>.Failure("Бюджет не найден");
-
-                var budgetDto = new BudgetDto(
-                    budget.Id,
-                    budget.EstablishedAmount ?? 0,
-                    budget.CurrentExpenses ?? 0,
-                    budget.PeriodStart ?? DateOnly.MinValue,
-                    budget.PeriodEnd ?? DateOnly.MinValue,
-                    new List<CategoryBudgetDto>());
-
-                return Result<BudgetDto>.Success(budgetDto);
-            }
-            catch (Exception ex)
-            {
-                return Result<BudgetDto>.Failure($"Ошибка при получении бюджета: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Загружает анализ бюджета с РЕАЛЬНЫМИ расходами из БД
-        /// </summary>
-        public async Task<Result<BudgetAnalysisDto>> GetBudgetAnalysisAsync(int budgetId)
-        {
-            try
-            {
-                var budget = await _unitOfWork.BudgetRepository.GetByIdAsync(budgetId);
-                if (budget == null)
-                    return Result<BudgetAnalysisDto>.Failure("Бюджет не найден");
-
-                // ВАЖНО: Берём РЕАЛЬНЫЕ расходы из базы данных
-                // 1. Находим все расходы в период бюджета
-                var expenses = await _unitOfWork.ExpenseRepository.FindAsync(e =>
-                    e.Date >= budget.PeriodStart &&
-                    e.Date <= budget.PeriodEnd);
-
-                // 2. Обновляем CurrentExpenses в бюджете
-                decimal totalSpent = expenses.Sum(e => e.Sum ?? 0);
-                budget.CurrentExpenses = totalSpent;
-                await _unitOfWork.BudgetRepository.UpdateAsync(budget);
-                await _unitOfWork.SaveChangesAsync();
-
-                // 3. Группируем расходы по категориям
-                var expensesByCategory = expenses
-                    .GroupBy(e => e.Categoryid)
-                    .ToDictionary(g => g.Key, g => g.Sum(e => e.Sum ?? 0));
-
-                var categories = new List<CategoryAnalysisDto>();
-
-                // 4. Создаём анализ по категориям
-                foreach (var categoryId in expensesByCategory.Keys)
-                {
-                    var categorySpent = expensesByCategory[categoryId];
-                    // В примере даём каждой категории по 10% от бюджета
-                    var categoryLimit = (budget.EstablishedAmount ?? 0) * 0.1m;
-                    double percentage = (double)(categoryLimit > 0 ? (categorySpent / categoryLimit) * 100 : 0);
-                    var isExceeded = categorySpent > categoryLimit;
-
-                    // Получаем название категории (если нужно)
-                    string categoryName = $"Категория {categoryId}";
-
-                    categories.Add(new CategoryAnalysisDto(
-                        categoryName,
-                        categoryLimit,
-                        categorySpent,
-                        percentage,
-                        isExceeded));
+                    await _context.BudgetRepository.UpdateAsync(budgetEntity);
                 }
-
-                // Если нет расходов, добавим пример категорий
-                if (categories.Count == 0)
+                else
                 {
-                    categories.Add(new CategoryAnalysisDto("Продукты", 5000, 0, 0, false));
-                    categories.Add(new CategoryAnalysisDto("Транспорт", 3000, 0, 0, false));
-                    categories.Add(new CategoryAnalysisDto("Развлечения", 2000, 0, 0, false));
+                    budgetEntity = CreateNewBudgetEntity(dto);
+                    await _context.BudgetRepository.AddAsync(budgetEntity);
                 }
-
-                var totalBudget = budget.EstablishedAmount ?? 0;
-                var remaining = totalBudget - totalSpent;
-                var percentageUsed = totalBudget > 0 ? (double)(totalSpent / totalBudget) * 100 : 0;
-
-                var analysis = new BudgetAnalysisDto(
-                    totalBudget,
-                    totalSpent,
-                    remaining,
-                    percentageUsed,
-                    categories);
-
-                return Result<BudgetAnalysisDto>.Success(analysis);
             }
-            catch (Exception ex)
+            else
             {
-                return Result<BudgetAnalysisDto>.Failure($"Ошибка при анализе бюджета: {ex.Message}");
+                budgetEntity = CreateNewBudgetEntity(dto);
+                await _context.BudgetRepository.AddAsync(budgetEntity);
             }
-        }
 
-        public async Task<Result> DeleteBudgetAsync(int budgetId)
-        {
-            try
+            await _context.SaveChangesAsync();
+
+            if (user.Budgetid != budgetEntity.Id)
             {
-                var budget = await _unitOfWork.BudgetRepository.GetByIdAsync(budgetId);
-                if (budget == null)
-                    return Result.Failure("Бюджет не найден");
+                user.Budgetid = budgetEntity.Id;
+                await _context.SaveChangesAsync();
 
-                await _unitOfWork.BudgetRepository.DeleteAsync(budget);
-                await _unitOfWork.SaveChangesAsync();
-
-                return Result.Success();
-            }
-            catch (Exception ex)
-            {
-                return Result.Failure($"Ошибка при удалении бюджета: {ex.Message}");
-            }
-        }
-
-        public async Task<Result> CheckLowBalanceAlert(int walletId, decimal threshold)
-        {
-            try
-            {
-                var wallet = await _unitOfWork.WalletRepository.GetByIdAsync(walletId);
-                if (wallet == null)
-                    return Result.Failure("Кошелек не найден");
-
-                if (wallet.Balance.HasValue && wallet.Balance < threshold)
+                if (Session.Session.CurrentUser != null)
                 {
-                    await _notificationService.SendLowBalanceAlertAsync(
-                        wallet.Userid ?? 0,
-                        wallet.Name,
-                        wallet.Balance.Value,
-                        threshold);
+                    Session.Session.CurrentUser.Budgetid = budgetEntity.Id;
                 }
+            }
 
-                return Result.Success();
-            }
-            catch (Exception ex)
-            {
-                return Result.Failure($"Ошибка при проверке баланса: {ex.Message}");
-            }
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    private Budget CreateNewBudgetEntity(CreateBudgetDto dto)
+    {
+        return new Budget
+        {
+            EstablishedAmount = dto.Amount,
+            PeriodStart = dto.PeriodStart,
+            PeriodEnd = dto.PeriodEnd,
+            NeedsPercentage = dto.Needs,
+            WantsPercentage = dto.Wants,
+            SavingsPercentage = dto.Savings,
+            CurrentExpenses = 0
+        };
+    }
+    public async Task<Budget> GetBudgetByIdAsync(int id)
+    {
+        try
+        {
+            var budget = await _context.BudgetRepository.GetByIdAsync(id);
+            return budget;
+        }
+        catch (Exception ex)
+        {
+            // Здесь можно добавить логгирование ошибки
+            Console.WriteLine($"Ошибка при получении бюджета: {ex.Message}");
+            return null;
         }
     }
 }

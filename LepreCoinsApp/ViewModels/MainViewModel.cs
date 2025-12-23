@@ -121,7 +121,7 @@ public partial class MainViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            await Application.Current!.MainPage!.DisplayAlert("Ошибка", ex.Message, "OK");
+            await Application.Current!.MainPage!.DisplayAlertAsync("Ошибка", ex.Message, "OK");
         }
         finally
         {

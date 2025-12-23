@@ -17,10 +17,8 @@ public partial class ReportsPage : ContentPage
     {
         base.OnAppearing();
 
-        // Обновление отчета при повторном открытии страницы
         if (_viewModel.IsReportVisible)
         {
-            // Здесь можно добавить логику обновления UI при необходимости
         }
     }
 }

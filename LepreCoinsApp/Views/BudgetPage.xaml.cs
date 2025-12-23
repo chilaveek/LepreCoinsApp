@@ -1,6 +1,4 @@
-﻿using LepreCoinsApp.ViewModels;
-
-namespace LepreCoinsApp.Views;
+﻿namespace LepreCoinsApp.Views;
 
 public partial class BudgetPage : ContentPage
 {
@@ -13,18 +11,9 @@ public partial class BudgetPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-
-        if (BindingContext is BudgetViewModel viewModel)
+        if (BindingContext is BudgetViewModel vm)
         {
-            if (viewModel.InitializeBudgetCommand.CanExecute(null))
-            {
-                await viewModel.InitializeBudgetCommand.ExecuteAsync(null);
-            }
+            await vm.LoadBudgetDataCommand.ExecuteAsync(null);
         }
-    }
-
-    protected override async void OnNavigatedTo(NavigatedToEventArgs args)
-    {
-        base.OnNavigatedTo(args);
     }
 }

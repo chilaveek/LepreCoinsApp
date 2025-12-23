@@ -64,6 +64,9 @@ namespace LepreCoinsApp
             builder.Services.AddSingleton<RegisterViewModel>();
             builder.Services.AddSingleton<AuthenticationShell>();
 
+            builder.Services.AddTransient<BudgetCreateViewModel>();
+            builder.Services.AddTransient<BudgetCreatePage>();
+
             var app = builder.Build();
 
             Task.Run(async () =>
